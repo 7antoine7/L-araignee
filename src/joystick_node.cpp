@@ -1,4 +1,9 @@
 /*
+
+
+
+
+
  * Copyright (c) 2011, Willow Garage, Inc.
  * All rights reserved.
  *
@@ -41,25 +46,33 @@
 #define KEYCODE_U 0x41
 #define KEYCODE_D 0x42
 #define KEYCODE_Q 0x71
+#define KEYCODE_E 0x65
+#define KEYCODE_Disable 0x64
+#define KEYCODE_Laser 0x6C
+#define KEYCODE_PLUS 0x2B
+#define KEYCODE_MOINS 0x2D
 
 class Joy_emulator
 {
 public:
-	Joy_emulator();
-	void keyLoop();
-	void watchdog();
+  Joy_emulator();
+  void keyLoop();
+  void watchdog();
 
 private:
 
-	ros::NodeHandle nh_,ph_;
-	double linear_, angular_;
-	ros::Time first_publish_;
-	ros::Time last_publish_;
-	double l_scale_, a_scale_;
-	ros::Publisher vel_pub_;
-	ros::Publisher joy_pub_;
-	void publish(double, double);
-	boost::mutex publish_mutex_;
+  ros::NodeHandle nh_,ph_;
+  double linear_, angular_;
+  ros::Time first_publish_;
+  ros::Time last_publish_;
+  double l_scale_, a_scale_;
+  ros::Publisher vel_pub_;
+  ros::Publisher joy_pub_;
+  void publish(double, double);
+  boost::mutex publish_mutex_;
+  bool active = true;
+  bool laser = true;
+  int vitesse = 0;
 
 };
 
@@ -70,11 +83,11 @@ Joy_emulator::Joy_emulator():
   l_scale_(1.0),
   a_scale_(1.0)
 {
-	ph_.param("scale_angular", a_scale_, a_scale_);
-	ph_.param("scale_linear", l_scale_, l_scale_);
+  ph_.param("scale_angular", a_scale_, a_scale_);
+  ph_.param("scale_linear", l_scale_, l_scale_);
 
-	vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-	joy_pub_ = nh_.advertise<sensor_msgs::Joy>("joy", 1);
+  vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+  joy_pub_ = nh_.advertise<sensor_msgs::Joy>("joy", 1);
 }
 
 int kfd = 0;
@@ -90,7 +103,7 @@ void quit(int sig)
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "turtlebot_teleop");
+  ros::init(argc, argv, "joy_emulator");
   Joy_emulator turtlebot_teleop;
   ros::NodeHandle n;
 
@@ -148,6 +161,7 @@ void Joy_emulator::keyLoop()
 
 
     linear_=angular_=0;
+    vitesse = 0;  //Remet a 0 pour qu'il envoie toujours 0 si je n'appuie pas dessus
     ROS_DEBUG("value: 0x%02X\n", c);
   
     switch(c)
@@ -168,12 +182,42 @@ void Joy_emulator::keyLoop()
         ROS_DEBUG("DOWN");
         linear_ = -1.0;
         break;
+      case KEYCODE_E: //Lettre E active le robot
+        ROS_DEBUG("Enabled");
+        active = true;
+        break;
+      case KEYCODE_Disable: //Lettre D desactive le robot
+        ROS_DEBUG("Disabled");
+        active = false;
+        break;
+      case KEYCODE_Laser: //Activer ou desactiver le laser
+        if(laser == true)
+        {
+          laser = false;
+          ROS_INFO("Laser off");
+        }
+        else
+        {
+          laser = true;
+          ROS_INFO("Laser on");
+        }
+        break;
+      case KEYCODE_PLUS:
+        ROS_DEBUG("PLUS");
+        vitesse = 1;
+        break;
+      case KEYCODE_MOINS:
+        ROS_DEBUG("MOINS");
+        vitesse = -1;
+        break;
     }
+
     boost::mutex::scoped_lock lock(publish_mutex_);
     if (ros::Time::now() > last_publish_ + ros::Duration(1.0)) { 
       first_publish_ = ros::Time::now();
     }
     last_publish_ = ros::Time::now();
+
     publish(angular_, linear_);
   }
 
@@ -183,23 +227,25 @@ void Joy_emulator::keyLoop()
 void Joy_emulator::publish(double angular, double linear)  
 {
     geometry_msgs::Twist vel;
-	sensor_msgs::Joy joy_msg;//ne pas toucher
-	
-	// 
-	joy_msg.buttons.resize(1);
-	joy_msg.axes.resize(2);
-	
+  sensor_msgs::Joy joy_msg;
+  
+  // 
+  joy_msg.buttons.resize(3);
+  joy_msg.axes.resize(2);
+  
     vel.angular.z = a_scale_*angular;
     vel.linear.x = l_scale_*linear;
 
     //vel_pub_.publish(vel); 
-	
-	joy_msg.buttons[0]= 1;
-	joy_msg.axes[1] = linear;
-	joy_msg.axes[0] = angular;
-	
-	joy_pub_.publish(joy_msg); //ne pas toucher
+  
+  joy_msg.buttons[0]= active; //Verifie si robot active
+  joy_msg.buttons[1]= laser; //Verifie si laser active
+  joy_msg.buttons[2]= vitesse;  //Changement de vitesse
+  joy_msg.axes[1] = linear;
+  joy_msg.axes[0] = angular;
+  
+  joy_pub_.publish(joy_msg);
 
 
   return;
-}
+}//vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
