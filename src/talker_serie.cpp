@@ -31,7 +31,7 @@
 // %Tag(MSG_HEADER)%
 #include "std_msgs/String.h"
 // %EndTag(MSG_HEADER)%
-
+#include "serial/serial.h"
 #include <sstream>
 
 /**
@@ -93,6 +93,7 @@ int main(int argc, char **argv)
    */
 // %Tag(ROS_OK)%
   int count = 0;
+  serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000));
   while (ros::ok())
   {
 // %EndTag(ROS_OK)%
@@ -104,6 +105,7 @@ int main(int argc, char **argv)
 
     std::stringstream ss;
     ss << "allo monde " << count;
+    my_serial.write("allo monde");
     msg.data = ss.str();
 // %EndTag(FILL_MESSAGE)%
 
