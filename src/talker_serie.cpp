@@ -34,6 +34,9 @@
 #include "serial/serial.h"
 #include <sstream>
 
+serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000));
+
+void Callback(const std_msgs::String::ConstPtr& msg);
 /**
  * This tutorial demonstrates simple sending of messages over the ROS system.
  */
@@ -50,7 +53,7 @@ int main(int argc, char **argv)
    * part of the ROS system.
    */
 // %Tag(INIT)%
-  ros::init(argc, argv, "talker");
+  ros::init(argc, argv, "serial");
 // %EndTag(INIT)%
 
   /**
@@ -79,10 +82,7 @@ int main(int argc, char **argv)
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
-// %Tag(PUBLISHER)%
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
-// %EndTag(PUBLISHER)%
-
+ ros::Subscriber sub = n.subscribe("serial_topic", 1000, Callback);
 // %Tag(LOOP_RATE)%
   ros::Rate loop_rate(10);
 // %EndTag(LOOP_RATE)%
@@ -93,25 +93,15 @@ int main(int argc, char **argv)
    */
 // %Tag(ROS_OK)%
   int count = 0;
-  serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000));
+  
   while (ros::ok())
   {
 // %EndTag(ROS_OK)%
     /**
      * This is a message object. You stuff it with data, and then publish it.
      */
-// %Tag(FILL_MESSAGE)%
-    std_msgs::String msg;
 
-    std::stringstream ss;
-    ss << "allo monde " << count;
-    my_serial.write("allo monde");
-    msg.data = ss.str();
-// %EndTag(FILL_MESSAGE)%
 
-// %Tag(ROSCONSOLE)%
-    ROS_INFO("%s", msg.data.c_str());
-// %EndTag(ROSCONSOLE)%
 
     /**
      * The publish() function is how you send messages. The parameter
@@ -119,9 +109,6 @@ int main(int argc, char **argv)
      * given as a template parameter to the advertise<>() call, as was done
      * in the constructor above.
      */
-// %Tag(PUBLISH)%
-    chatter_pub.publish(msg);
-// %EndTag(PUBLISH)%
 
 // %Tag(SPINONCE)%
     ros::spinOnce();
@@ -135,5 +122,10 @@ int main(int argc, char **argv)
 
 
   return 0;
+}
+
+void Callback(const std_msgs::String::ConstPtr& msg)
+{
+  my_serial.write( msg->data.c_str());
 }
 // %EndTag(FULLTEXT)%
