@@ -57,6 +57,9 @@ using namespace std;
 
 /** max value for this robot is 0.25 rad/sec => 360 degrés = 2*PI (radian)*/
 #define ROBOT_ROTATION_MAX_SPEED 0.25
+void freeServos();
+void startServos();
+
 
 int testVal = 0;
 int enMarche = 1;
@@ -77,32 +80,12 @@ std_msgs::String message;
 bool test = true;
 int valPrec = 0;
 int compteur;
+int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
-string freeServos()
-{
-  string serie("");
-  string patte("");
 
-
-  for(int i = 0; i < 32; i++)
-  {
-    patte = to_string(i);
-    serie += "#" + patte + "P0";
-    //ROS_INFO("%s\n", serie.c_str());
-  }
-
-  serie += "\r";
-  return serie;
-}
-
-string startServos()
-{
-  std_msgs::String msg;
-
-  msg.data = "#0P1500#1P1500#2P1500#4P1500#5P1500#6P1500#8P1500#9P1500#10P1500#16P1500#17P1500#18P1500#20P1500#21P1500#22P1500#24P1500#25P1500#26P1500\r";
-
-  return msg.data;
-}
 
 /*void modeAutomatique()
 {
@@ -343,7 +326,6 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
     //ROS_INFO("vitesse =%f", vitesse);
     if(enMarche > valPrec)// test for dead man switch
     {
-      message.data = startServos();
       if((distanceTest_ < 0.5f) && (testAnalog2 > 0.0f) && laserOn)    //Partie qui regarde si le robot approche un mur si le laser est active
       linearSpeedCmd_ = 0;
       else
@@ -359,7 +341,6 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
     {
       base_cmd.linear.x = 0.0f;
       base_cmd.angular.z = 0.0f;
-      message.data = freeServos();
     }
     valPrec = enMarche;
     //ROS_INFO("enMArche =%d", valPrec);
@@ -393,6 +374,53 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
   }
 
   return 0;
+}
+
+void freeServos()
+{
+  string serie("");
+  string patte("");
+
+
+  for(int i = 0; i < 32; i++)
+  {
+    patte = to_string(i);
+    serie += "#" + patte + "P0";
+    //ROS_INFO("%s\n", serie.c_str());
+  }
+
+  serie += "\r";
+  //return serie;
+}
+
+void startServos()
+{
+  //std_msgs::String msg;
+
+  for (int i = 0; i <= 18; i++)
+  {
+  	tabServos[i][0] = i;
+  }
+
+  for(int i = 0; i <= 17; i++)
+  {
+  	for(int j = 2; j <= 3; i++)
+  	{
+  		tabServos[i][j] = 0;
+  	}
+  }
+
+  for(int i = 0; i <= 17; i++)
+  {
+  	for(int j = 2; j <= 3; i++)
+  	{
+  		tabServos[i][j] = 0;
+  	}
+  }
+
+  //msg.data = "#0P1500#1P1500#2P1500#4P1500#5P1500#6P1500#8P1500#9P1500#10P1500#16P1500#17P1500#18P1500#20P1500#21P1500#22P1500#24P1500#25P1500#26P1500\r";
+
+  //return msg.data;
 }
 
 
