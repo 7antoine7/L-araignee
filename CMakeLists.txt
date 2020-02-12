@@ -217,6 +217,11 @@ target_link_libraries(joystick_node ${catkin_LIBRARIES})
 #
 add_executable(talker_serie src/talker_serie.cpp)
 target_link_libraries(talker_serie ${catkin_LIBRARIES})
+#
+#    Node pour la logique du robot
+#
+add_executable(robot_logic src/robot_logic.cpp)
+target_link_libraries(robot_logic ${catkin_LIBRARIES})
 
 
 
