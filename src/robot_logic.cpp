@@ -52,11 +52,13 @@ using namespace std;
 #undef Manette
 #define Manette
 
-/** max value for this robot is 500 mm/sec */
-#define ROBOT_LINEAR_MAX_SPEED 0.5f
+#define nbServos 18
+#define nbPattes 6
 
-/** max value for this robot is 0.25 rad/sec => 360 degrés = 2*PI (radian)*/
-#define ROBOT_ROTATION_MAX_SPEED 0.25
+#define allume 0
+#define eteint 1
+#define singleLeg 2
+
 void freeServos();
 void startServos();
 
@@ -64,22 +66,19 @@ void startServos();
 int testVal = 0;
 int enMarche = 1;
 int prevButton = 0;
-int testLaser = 0;
-int laserOn = 1;
-int changeVitesse = 0;
-int vitPrec = 0;
 int modeAuto = 0;
 int etape = 0;
 int animation = 0;
-float vitesse = ROBOT_LINEAR_MAX_SPEED;
-float vingPourcent = (ROBOT_LINEAR_MAX_SPEED *20/100);
 float testAnalog = 0.0f;
 float testAnalog2 = 0.0f;
 float distanceTest_ = 0.0f;
 std_msgs::String message;
-bool test = true;
+int etat = 0;
+bool aEnvoye = true;
 int valPrec = 0;
 int compteur;
+int noPatte = 1;
+int tabAEnvoye[72];
 int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -131,22 +130,37 @@ int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 
 void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {  
-  #ifdef Manette
+  if(msg->buttons[7])
+  	enMarche= !enMarche;
 
-  testVal = msg->buttons[7];
-  testLaser = msg->buttons[6];
   modeAuto = msg->buttons[8];
 
-  if(testVal)
+  switch(etat)
   {
-    enMarche = !enMarche;
-    test = true;
+  	case allume:
+  		if(msg->buttons[7])
+  		{
+  			etat = eteint;
+  			aEnvoye = true;
+  			//enMarche = false;
+  		}
+  		if(msg->buttons[4])
+  		{
+  			etat = singleLeg;
+  			startServos();
+  		}
+  		break;
+
+  	case eteint:
+  		if(msg->buttons[7])
+  		{
+  			etat = allume;
+  			aEnvoye = true;
+  			//enMarche = true;
+  		}
+  		break;
   }
 
-  if(testLaser)
-  {
-    laserOn = !laserOn;
-  }
 
   /*if(modeAuto)
   {
@@ -161,62 +175,11 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
     }
   }*/
 
-  #else
-  //ROS_INFO("Joy callback");//: [%s]", msg->data.c_str());
-  testVal = msg->buttons[0];
-    testLaser = msg->buttons[1];  //Recoit si le laser est actif ou non
-    changeVitesse = msg->buttons[2];  //Recoit s'il y a changement de vitesse 
-
-  #endif
-
   testAnalog = msg->axes[0];
   testAnalog2 = msg->axes[1];
 }
 
-void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
-{  
-  //ROS_INFO("Scan callback %f %f %f",msg->angle_min,msg->angle_max,msg->angle_increment);//: [%s]", msg->data.c_str());
-  distanceTest_ = msg->ranges[90]; // valeur devant le robot // 1080 valeur max avec le capteur Stage
-  //ROS_INFO("Obstacle distance = %f", distanceTest_);
-}
 
-/*
-std_msgs/Header header
-  uint32 seq
-  time stamp
-  string frame_id
-float32 angle_min
-float32 angle_max
-float32 angle_increment
-float32 time_increment
-float32 scan_time
-float32 range_min
-float32 range_max
-float32[] ranges
-float32[] intensities
-
-*/
-
-void positionCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-  float yaw = 0.0f;
-  //ROS_INFO("Test position x=%f" , msg->pose.pose.position.x);
-  yaw = tf::getYaw(msg->pose.pose.orientation);
-  
-  //ROS_INFO("Yaw position x=%f" ,(yaw*180.0f)/M_PI);
-}
-/*
-geometry_msgs/Pose pose
-    geometry_msgs/Point position
-      float64 x
-      float64 y
-      float64 z
-    geometry_msgs/Quaternion orientation
-      float64 x
-      float64 y
-      float64 z
-      float64 w
-*/
 /* variables used to define the command values to be sent out */
 float linearSpeedCmd_ = 0;
 float rotationSpeedCmd_ = 0;
@@ -271,8 +234,8 @@ int main(int argc, char **argv)
 // %Tag(PUBLISHER)%
 
 // SECTION THAT DEFINES THE INFORMATIONS THAT OUR NODE WILL PUBLISH
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter_logic", 1000);
-  ros::Publisher myJoy_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
+  //ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter_logic", 1000);
+  //ros::Publisher myJoy_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
   ros::Publisher serial = n.advertise<std_msgs::String>("serial_topic", 1000);
 // %EndTag(PUBLISHER)%
 
@@ -282,8 +245,8 @@ int main(int argc, char **argv)
 
 // SECTION THAT DEFINES THE INFORMATIONS THAT WE WANT TO LISTEN TO
 ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
-ros::Subscriber subLaser = n.subscribe("base_scan", 10, scanCallback);
-ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCallback);
+//ros::Subscriber subLaser = n.subscribe("base_scan", 10, scanCallback);
+//ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCallback);
   /**
    * A count of how many messages we have sent. This is used to create
    * a unique string for each message.
@@ -293,56 +256,78 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
 // information structures that will be used to send for the different messages
   std_msgs::String msg;
   geometry_msgs::Twist base_cmd;
-  int test123 = 123;
 
   
 
   while (ros::ok())
   {  
-    /*if(modeAuto)
-    {
-      modeAutomatique();
-    }*/
+  	int k = 0;
 
-    if(changeVitesse != vitPrec)
+    if(enMarche)
     {
-      if(changeVitesse == -1)
-      {
-        vitesse = vitesse - vingPourcent;
-        if(vitesse <= 0)
-          vitesse = 0;
-      }
-      else if(changeVitesse == 1)
-      {
-        vitesse = vitesse + vingPourcent;
-        if(vitesse >= ROBOT_LINEAR_MAX_SPEED)
-        {
-          vitesse = ROBOT_LINEAR_MAX_SPEED;
-        }
-      }
-    }
-    vitPrec = changeVitesse;
+    	switch(etat)
+    	{
+    		case allume:
+	    		{
+	    			for(int i = 0; i  < nbServos; i++)
+	    			{
+	    				tabServos[1][i] = 1500;
+	    			}
+	    		}
+	    		break;
 
-    //ROS_INFO("vitesse =%f", vitesse);
-    if(enMarche > valPrec)// test for dead man switch
-    {
-      if((distanceTest_ < 0.5f) && (testAnalog2 > 0.0f) && laserOn)    //Partie qui regarde si le robot approche un mur si le laser est active
-      linearSpeedCmd_ = 0;
-      else
-      linearSpeedCmd_ = (testAnalog2 * ROBOT_LINEAR_MAX_SPEED);
-      
-      base_cmd.linear.x = linearSpeedCmd_;
-      
-      rotationSpeedCmd_ = (testAnalog * ROBOT_ROTATION_MAX_SPEED); 
-      base_cmd.angular.z = rotationSpeedCmd_;
-    }
+	    	case eteint:
+	    		{
+	    			for(int i = 0; i  < nbServos; i++)
+	    			{
+	    				tabServos[1][i] = 0;
+	    			}
+	    		}
+	    		break;
 
-    else
-    {
-      base_cmd.linear.x = 0.0f;
-      base_cmd.angular.z = 0.0f;
+	    	case singleLeg:
+	    		{
+	    			/*if(msg->buttons[8])
+	    			{
+	    				noPatte++;
+	    				if(noPatte > nbPattes)
+	    				{
+	    					noPatte = 1;
+	    				}
+	    			}
+
+	    			switch(noPatte)
+	    			{
+	    				case 1:
+	    					if(msg->axes[0] != 0)
+	    					{
+
+	    					}
+	    				case 2:
+
+	    				case 3:
+
+	    				case 4:
+
+	    				case 5:
+
+	    				case 6:
+
+	    			}*/
+	    		}
+
+    	}
+
+    	for(int i = 0; i < nbServos; i++)
+    	{
+    		for(int j = 0; j < 4; j++)
+    		{    			
+    			tabAEnvoye[k] = tabServos[j][i];
+    			k++;
+    		}
+    	}
     }
-    valPrec = enMarche;
+    
     //ROS_INFO("enMArche =%d", valPrec);
   
   
@@ -352,15 +337,15 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
      * given as a template parameter to the advertise<>() call, as was done
      * in the constructor above.
      */
-      chatter_pub.publish(msg);
-      myJoy_pub.publish(base_cmd);
+      //chatter_pub.publish(msg);
+      //myJoy_pub.publish(base_cmd);
 
-      if(test)
+      /*if(aEnvoye)
       {
       	ROS_INFO("message = %s\r", message.data.c_str());
-      	serial.publish(message);
-      	test = false;  
-      }
+      	serial.publish(tabAEnvoye);
+      	aEnvoye = false;  
+      }*/
       
 
 // %Tag(SPINONCE)%
@@ -376,7 +361,7 @@ ros::Subscriber subPose = n.subscribe("base_pose_ground_truth", 10, positionCall
   return 0;
 }
 
-void freeServos()
+/*void freeServos()
 {
   string serie("");
   string patte("");
@@ -391,36 +376,16 @@ void freeServos()
 
   serie += "\r";
   //return serie;
-}
+}*/
 
 void startServos()
 {
-  //std_msgs::String msg;
-
-  for (int i = 0; i <= 18; i++)
+  for (int i = 0; i < nbServos; i++)
   {
-  	tabServos[i][0] = i;
+  	tabServos[1][i] = 1500;
   }
-
-  for(int i = 0; i <= 17; i++)
-  {
-  	for(int j = 2; j <= 3; i++)
-  	{
-  		tabServos[i][j] = 0;
-  	}
-  }
-
-  for(int i = 0; i <= 17; i++)
-  {
-  	for(int j = 2; j <= 3; i++)
-  	{
-  		tabServos[i][j] = 0;
-  	}
-  }
-
-  //msg.data = "#0P1500#1P1500#2P1500#4P1500#5P1500#6P1500#8P1500#9P1500#10P1500#16P1500#17P1500#18P1500#20P1500#21P1500#22P1500#24P1500#25P1500#26P1500\r";
-
-  //return msg.data;
 }
+
+
 
 
