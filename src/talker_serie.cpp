@@ -41,7 +41,7 @@ int main(int argc, char **argv)
   ros::Subscriber sub = n.subscribe("serial_topic", 1000, Callback);
   ros::Rate loop_rate(10);
   
-  serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000)); //ouverture du port série.
+  //serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000)); //ouverture du port série.
 
   while (ros::ok()) 
   {
