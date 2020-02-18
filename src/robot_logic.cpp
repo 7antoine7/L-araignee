@@ -54,6 +54,29 @@ using namespace std;
 
 #define nbServos 18
 #define nbPattes 6
+#define nbBoutons 11
+#define nbAxes 8
+
+#define boutonA 0
+#define boutonB 1
+#define boutonX 2
+#define boutonY 3
+#define boutonLB 4
+#define boutonRB 5
+#define boutonBack 6
+#define boutonStart 7
+#define boutonLogitech 8
+#define boutonJoyGauche 9
+#define boutonJoyDroit 10
+
+#define axeHorizJoyGauche 0
+#define axeVertJoyGauche 1
+#define boutonLT 2
+#define axeHorizJoyDroit 3
+#define axeVertJoyDroit 4
+#define boutonRT 5
+#define croixHoriz 6
+#define croixVert 7
 
 #define allume 0
 #define eteint 1
@@ -64,7 +87,6 @@ void startServos();
 
 
 int testVal = 0;
-int enMarche = 1;
 int prevButton = 0;
 int modeAuto = 0;
 int etape = 0;
@@ -78,6 +100,11 @@ bool aEnvoye = true;
 int valPrec = 0;
 int compteur;
 int noPatte = 1;
+int positionHanche = 0;
+int positionGenou = 0;
+int positionPatte = 0;
+float tabAxes[8];
+float tabBoutons[11];
 int tabAEnvoye[72];
 int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -129,34 +156,43 @@ int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 }*/
 
 void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
-{  
-  if(msg->buttons[7])
-  	enMarche= !enMarche;
+{ 
 
-  modeAuto = msg->buttons[8];
+  for(int i = 0; i < nbBoutons; i++)
+  {
+  	tabBoutons[i] = msg->buttons[i];	//Pour pouvoir acceder a la valeur des boutons dans les mouvements
+  } 
+
+  for(int i = 0; i < nbAxes; i++)
+  {
+  	tabAxes[i] = msg->axes[i];	//Pour pouvoir acceder a la valeur des axes dans les mouvements
+  } 
+
+  //modeAuto = tabBoutons[boutonBack];
 
   switch(etat)
   {
   	case allume:
-  		if(msg->buttons[7])
+  		if(tabBoutons[boutonStart])	
   		{
-  			etat = eteint;
+  			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
   			aEnvoye = true;
-  			//enMarche = false;
   		}
-  		if(msg->buttons[4])
+  		if(tabBoutons[boutonY])	
   		{
   			etat = singleLeg;
-  			startServos();
+  			positionHanche = 1500;
+  			positionGenou = 1500;
+  			positionPatte = 1500;
+  			aEnvoye = true;
   		}
   		break;
 
   	case eteint:
-  		if(msg->buttons[7])
+  		if(tabBoutons[boutonStart])
   		{
   			etat = allume;
   			aEnvoye = true;
-  			//enMarche = true;
   		}
   		break;
   }
@@ -174,17 +210,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
       startServos();
     }
   }*/
-
-  testAnalog = msg->axes[0];
-  testAnalog2 = msg->axes[1];
 }
-
-
-/* variables used to define the command values to be sent out */
-float linearSpeedCmd_ = 0;
-float rotationSpeedCmd_ = 0;
-
-
 
 /**
  * Main loop of the node.
@@ -263,69 +289,105 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   {  
   	int k = 0;
 
-    if(enMarche)
-    {
-    	switch(etat)
-    	{
-    		case allume:
-	    		{
-	    			for(int i = 0; i  < nbServos; i++)
-	    			{
-	    				tabServos[1][i] = 1500;
-	    			}
-	    		}
-	    		break;
-
-	    	case eteint:
-	    		{
-	    			for(int i = 0; i  < nbServos; i++)
-	    			{
-	    				tabServos[1][i] = 0;
-	    			}
-	    		}
-	    		break;
-
-	    	case singleLeg:
-	    		{
-	    			/*if(msg->buttons[8])
-	    			{
-	    				noPatte++;
-	    				if(noPatte > nbPattes)
-	    				{
-	    					noPatte = 1;
-	    				}
-	    			}
-
-	    			switch(noPatte)
-	    			{
-	    				case 1:
-	    					if(msg->axes[0] != 0)
-	    					{
-
-	    					}
-	    				case 2:
-
-	    				case 3:
-
-	    				case 4:
-
-	    				case 5:
-
-	    				case 6:
-
-	    			}*/
-	    		}
-
-    	}
-
-    	for(int i = 0; i < nbServos; i++)
-    	{
-    		for(int j = 0; j < 4; j++)
-    		{    			
-    			tabAEnvoye[k] = tabServos[j][i];
-    			k++;
+    
+	switch(etat)	//Mouvements a effectuer selon l'etat
+	{
+		case allume:	//L'araignee est en fonction
+    		{
+    			for(int i = 0; i  < nbServos; i++)
+    			{
+    				tabServos[1][i] = 1500;	//Met l'araignee en position de base
+    			}
     		}
-    	}
+    		break;
+
+    	case eteint:
+    		{
+    			for(int i = 0; i  < nbServos; i++)
+    			{
+    				tabServos[1][i] = 0;	//Eteint tous les servos
+    			}
+    		}
+    		break;
+
+    	case singleLeg:
+    		{
+    			if(tabBoutons[boutonBack])	//Pour changer de patte
+    			{
+    				noPatte++;
+    				if(noPatte > nbPattes)
+    				{
+    					noPatte = 1;	//Revient a 1 apres 6
+    				}
+    			}
+
+    			if(tabAxes[axeHorizJoyGauche] != 0)
+				{
+					positionHanche = positionHanche + (tabAxes[axeHorizJoyGauche]*25);
+					aEnvoye = true;
+				}
+
+				else if(tabAxes[axeVertJoyGauche] != 0)
+				{
+					positionGenou = positionGenou + (tabAxes[axeVertJoyGauche]*25);
+					aEnvoye = true;
+				}
+				else if(tabAxes[croixVert] != 0)
+				{
+					positionPatte = positionPatte + (tabAxes[croixVert]*25);
+					aEnvoye = true;
+				}
+
+    			switch(noPatte)
+    			{
+    				case 1:
+						tabServos[1][0] = positionHanche;
+						tabServos[1][1] = positionGenou;
+						tabServos[1][2] = positionPatte;
+						break;
+    					
+    				case 2:
+    					tabServos[1][3] = positionHanche;
+						tabServos[1][4] = positionGenou;
+						tabServos[1][5] = positionPatte;
+						break;
+
+    				case 3:
+    					tabServos[1][6] = positionHanche;
+						tabServos[1][7] = positionGenou;
+						tabServos[1][8] = positionPatte;
+						break;
+
+    				case 4:
+    					tabServos[1][9] = positionHanche;
+						tabServos[1][10] = positionGenou;
+						tabServos[1][11] = positionPatte;
+						break;
+
+    				case 5:
+    					tabServos[1][12] = positionHanche;
+						tabServos[1][13] = positionGenou;
+						tabServos[1][14] = positionPatte;
+						break;
+
+    				case 6:
+    					tabServos[1][15] = positionHanche;
+						tabServos[1][16] = positionGenou;
+						tabServos[1][17] = positionPatte;
+						break;
+    			}
+    		}
+
+	}
+
+		for(int i = 0; i < nbServos; i++)
+		{
+			for(int j = 0; j < 4; j++)
+			{    			
+				tabAEnvoye[k] = tabServos[j][i];
+				k++;
+			}
+		}
     }
     
     //ROS_INFO("enMArche =%d", valPrec);
@@ -355,8 +417,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 // %Tag(RATE_SLEEP)%
     loop_rate.sleep();
 // %EndTag(RATE_SLEEP)%
-    
-  }
 
   return 0;
 }
@@ -383,6 +443,7 @@ void startServos()
   for (int i = 0; i < nbServos; i++)
   {
   	tabServos[1][i] = 1500;
+  	aEnvoye = true;
   }
 }
 
