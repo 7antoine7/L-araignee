@@ -32,7 +32,7 @@ int tab2d[4][18];
 std::string result = "";
 
 
-
+bool test = true;
 int main(int argc, char **argv)
 {
   //INITIALISATION DE ROS---------------------------
@@ -61,9 +61,18 @@ void Callback(const std_msgs::UInt16MultiArray::ConstPtr& msg)
     tab2d[i] = *j;
     i++;
   }*/
-  for(int i = 0; i < NB_SERVO;i++)
+
+  
+  if(test)
   {
-    result = result + "#" + std::to_string(msg->data[0,i]) + "P" + std::to_string(msg->data[1,i]);
+    for(int i = 0; i < NB_SERVO;i++)
+    {
+      ROS_INFO("#");
+      ROS_INFO("%d",(int)msg->data[i]);
+      ROS_INFO("P");
+      ROS_INFO("%d\r",(int)msg->data[i+18]);
+    }
+  test = false;
   }
-  ROS_INFO("%s\n",result.c_str());
+  
 }
