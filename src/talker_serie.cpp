@@ -29,7 +29,7 @@ void Callback(const std_msgs::String::ConstPtr& msg);
 int tab2d[4][18];
 std::string result = "";
 
-serial::Serial my_serial("/dev/ttyUSB0", 9600, serial::Timeout::simpleTimeout(1000));
+serial::Serial my_serial("/dev/ttyUSB0", 115200, serial::Timeout::simpleTimeout(1000));
 
 int main(int argc, char **argv)
 {

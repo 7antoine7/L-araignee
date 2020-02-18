@@ -99,7 +99,7 @@ int etat = 0;
 bool aEnvoye = true;
 int valPrec = 0;
 int compteur;
-int noPatte = 1;
+int noPatte = 0;
 int positionHanche = 0;
 int positionGenou = 0;
 int positionPatte = 0;
@@ -180,6 +180,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		}
   		if(tabBoutons[boutonY])	
   		{
+  			noPatte = 1;
   			etat = singleLeg;
   			positionHanche = 1500;
   			positionGenou = 1500;
@@ -187,6 +188,27 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			aEnvoye = true;
   		}
   		break;
+
+  	case singleLeg:
+		if(tabBoutons[boutonBack])
+		{
+			startServos();
+			positionHanche = 1500;
+  			positionGenou = 1500;
+  			positionPatte = 1500;
+  			aEnvoye = true;
+			noPatte++;
+			if(noPatte > nbPattes)
+			{
+				noPatte = 1;	//Revient a 1 apres 6
+			}
+		}
+		if(tabBoutons[boutonStart])	
+  		{
+  			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
+  			aEnvoye = true;
+  		}
+		break;
 
   	case eteint:
   		if(tabBoutons[boutonStart])
@@ -217,6 +239,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
  */
 int main(int argc, char **argv)
 {
+	int singleLegI = 0;
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line. For programmatic
@@ -266,7 +289,7 @@ int main(int argc, char **argv)
 // %EndTag(PUBLISHER)%
 
 // %Tag(LOOP_RATE)%
-  ros::Rate loop_rate(20); // value in Hz for the loop
+  ros::Rate loop_rate(80); // value in Hz for the loop
 // %EndTag(LOOP_RATE)%
 
 // SECTION THAT DEFINES THE INFORMATIONS THAT WE WANT TO LISTEN TO
@@ -312,29 +335,83 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
-    			if(tabBoutons[boutonBack])	//Pour changer de patte
-    			{
-    				noPatte++;
-    				if(noPatte > nbPattes)
-    				{
-    					noPatte = 1;	//Revient a 1 apres 6
-    				}
-    			}
-
     			if(tabAxes[axeHorizJoyGauche] != 0)
 				{
-					positionHanche = positionHanche + (tabAxes[axeHorizJoyGauche]*25);
+					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
+
+					if(positionHanche <= 750)
+					{
+						positionHanche = 750;
+					}
+					if(positionHanche >= 2250)
+					{
+						positionHanche = 2250;
+					}
+					
 					aEnvoye = true;
 				}
 
-				else if(tabAxes[axeVertJoyGauche] != 0)
+				if((tabAxes[axeVertJoyGauche] != 0) && (noPatte <= 3) && (noPatte >= 1))
 				{
-					positionGenou = positionGenou + (tabAxes[axeVertJoyGauche]*25);
+					positionGenou = positionGenou + (tabAxes[axeVertJoyGauche]*10);
+
+					if(positionGenou <= 750)
+					{
+						positionGenou = 750;
+					}
+					if(positionGenou >= 2250)
+					{
+						positionGenou = 2250;
+					}
+					
 					aEnvoye = true;
 				}
-				else if(tabAxes[croixVert] != 0)
+
+				else if ((tabAxes[axeVertJoyGauche] != 0) && (noPatte <= 6) && (noPatte >= 4))
 				{
-					positionPatte = positionPatte + (tabAxes[croixVert]*25);
+					positionGenou = positionGenou - (tabAxes[axeVertJoyGauche]*10);
+
+					if(positionGenou <= 750)
+					{
+						positionGenou = 750;
+					}
+					if(positionGenou >= 2250)
+					{
+						positionGenou = 2250;
+					}
+					
+					aEnvoye = true;
+				}
+
+				if((tabAxes[croixVert] != 0) && (noPatte <= 3) && (noPatte >= 1))
+				{
+					positionPatte = positionPatte - (tabAxes[croixVert]*10);
+
+					if(positionPatte <= 750)
+					{
+						positionPatte = 750;
+					}
+					if(positionPatte >= 2250)
+					{
+						positionPatte = 2250;
+					}
+					
+					aEnvoye = true;
+				}
+
+				else if((tabAxes[croixVert] != 0) && (noPatte <= 6) && (noPatte >= 4))
+				{
+					positionPatte = positionPatte + (tabAxes[croixVert]*10);
+
+					if(positionPatte <= 750)
+					{
+						positionPatte = 750;
+					}
+					if(positionPatte >= 2250)
+					{
+						positionPatte = 2250;
+					}
+					
 					aEnvoye = true;
 				}
 
@@ -380,44 +457,30 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
 	}
 
+	if(aEnvoye)
+	{
+		string serie = "";
+
 		for(int i = 0; i < nbServos; i++)
 		{
-			for(int j = 0; j < 4; j++)
-			{    			
-				tabAEnvoye[k] = tabServos[j][i];
-				k++;
-			}
+			serie = serie + "#" + to_string(tabServos[0][i]) + "P" + to_string(tabServos[1][i]);
 		}
-    }
-    
-    //ROS_INFO("enMArche =%d", valPrec);
-  
-  
-    /**
-     * The publish() function is how you send messages. The parameter
-     * is the message object. The type of this object must agree with the type
-     * given as a template parameter to the advertise<>() call, as was done
-     * in the constructor above.
-     */
-      //chatter_pub.publish(msg);
-      //myJoy_pub.publish(base_cmd);
-
-      /*if(aEnvoye)
-      {
-      	ROS_INFO("message = %s\r", message.data.c_str());
-      	serial.publish(tabAEnvoye);
-      	aEnvoye = false;  
-      }*/
-      
-
-// %Tag(SPINONCE)%
+		serie = serie + "\r";
+		message.data = serie;
+		ROS_INFO("%s\n", message.data.c_str());
+	  	serial.publish(message);
+	  	aEnvoye = false;  
+	}
+	// %Tag(SPINONCE)%
     ros::spinOnce();
-// %EndTag(SPINONCE)%
+	// %EndTag(SPINONCE)%
 
-// %Tag(RATE_SLEEP)%
+	// %Tag(RATE_SLEEP)%
     loop_rate.sleep();
-// %EndTag(RATE_SLEEP)%
+	// %EndTag(RATE_SLEEP)%
 
+  }
+    
   return 0;
 }
 
