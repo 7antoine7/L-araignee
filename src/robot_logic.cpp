@@ -1,4 +1,4 @@
-/*
+l/*
  * Copyright (C) 2008, Morgan Quigley and Willow Garage, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,6 +81,7 @@ using namespace std;
 #define allume 0
 #define eteint 1
 #define singleLeg 2
+#define marche 3
 
 void freeServos();
 void startServos();
@@ -112,7 +113,7 @@ int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 
-
+int iMarche = 0s;
 /*void modeAutomatique()
 {
   switch(animation)
@@ -187,6 +188,11 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			positionPatte = 1500;
   			aEnvoye = true;
   		}
+		if(tabBoutons[boutonA])
+		{
+			etat = marche;
+			iMarche = 0;
+		}
   		break;
 
   	case singleLeg:
@@ -335,6 +341,10 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
+				if(singleLegI < 5)
+				{
+
+				}
     			if(tabAxes[axeHorizJoyGauche] != 0)
 				{
 					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
