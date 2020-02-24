@@ -92,7 +92,6 @@ int prevButton = 0;
 int modeAuto = 0;
 int etape = 0;
 int animation = 0;
-int singleLegI = 0;
 float testAnalog = 0.0f;
 float testAnalog2 = 0.0f;
 float distanceTest_ = 0.0f;
@@ -200,25 +199,14 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		if(tabBoutons[boutonBack])
 		{
 			startServos();
-			singleLegI = 0;			
+			positionHanche = 1500;
+  			positionGenou = 1500;
+  			positionPatte = 1500;
   			aEnvoye = true;
 			noPatte++;
 			if(noPatte > nbPattes)
 			{
 				noPatte = 1;	//Revient a 1 apres 6
-			}
-
-			if((noPatte <= 3) && (noPatte >= 1))
-			{
-				positionHanche = 1500;
-	  			positionGenou = 1850;
-	  			positionPatte = 1500;
-			}
-			else if((noPatte <= 6) && (noPatte >= 4))
-			{
-				positionHanche = 1500;
-	  			positionGenou = 1150;
-	  			positionPatte = 1500;
 			}
 		}
 		if(tabBoutons[boutonStart])	
@@ -257,6 +245,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
  */
 int main(int argc, char **argv)
 {
+	int singleLegI = 0;
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line. For programmatic
@@ -352,16 +341,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
-    			singleLegI++;
-
-    			if(singleLegI == 15)
-    			{
-    				positionHanche = 1500;
-    				positionGenou = 1500;
-    				positionPatte = 1500;
-    				aEnvoye = true;
-    			}
-
     			if(tabAxes[axeHorizJoyGauche] != 0)
 				{
 					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
@@ -410,9 +389,9 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					aEnvoye = true;
 				}
 
-				if((tabAxes[axeVertJoyDroit] != 0) && (noPatte <= 3) && (noPatte >= 1))
+				if((tabAxes[croixVert] != 0) && (noPatte <= 3) && (noPatte >= 1))
 				{
-					positionPatte = positionPatte - (tabAxes[axeVertJoyDroit]*10);
+					positionPatte = positionPatte - (tabAxes[croixVert]*10);
 
 					if(positionPatte <= 750)
 					{
@@ -426,9 +405,9 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					aEnvoye = true;
 				}
 
-				else if((tabAxes[axeVertJoyDroit] != 0) && (noPatte <= 6) && (noPatte >= 4))
+				else if((tabAxes[croixVert] != 0) && (noPatte <= 6) && (noPatte >= 4))
 				{
-					positionPatte = positionPatte + (tabAxes[axeVertJoyDroit]*10);
+					positionPatte = positionPatte + (tabAxes[croixVert]*10);
 
 					if(positionPatte <= 750)
 					{
