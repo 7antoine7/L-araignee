@@ -352,12 +352,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
-<<<<<<< HEAD
-				if(singleLegI < 5)
-				{
-
-				}
-=======
     			singleLegI++;
 
     			if(singleLegI == 15)
@@ -368,7 +362,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     				aEnvoye = true;
     			}
 
->>>>>>> 5387177e1f20398754672ea5491cedf7294ae25f
     			if(tabAxes[axeHorizJoyGauche] != 0)
 				{
 					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
