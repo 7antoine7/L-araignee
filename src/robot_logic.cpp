@@ -98,6 +98,8 @@ int prevButton = 0;
 int etape = 0;
 int animation = 0;
 int delaiI = 0;
+int repetition = 0;
+int delaiFermer = 0;
 float testAnalog = 0.0f;
 float testAnalog2 = 0.0f;
 float distanceTest_ = 0.0f;
@@ -134,7 +136,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   {
   	tabAxes[i] = msg->axes[i];	//Pour pouvoir acceder a la valeur des axes dans les mouvements
   } 
-
+ 
+  delaiFermer = 0;	//Repart le timer d'inactivite
 
   switch(etat)
   {
@@ -153,13 +156,16 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			positionGenou = 1500;
   			positionPatte = 1500;
   			aEnvoye = true;
+  			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
   		if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
   		{
+  			repetition = 0;
   			etat = automatique;
   			etape = 0;
   			quelAuto = 0;
+  			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
 		/*if(tabBoutons[boutonA])
@@ -173,7 +179,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		if(tabBoutons[boutonBack])
 		{
 			startServos();
-			delaiI = 0;			
+			delaiFermer = 0;	//Repart le timer d'inactivite
+			delaiI = 0;	//Repart le compteur entre les etapes			
   			aEnvoye = true;
 			noPatte++;
 			if(noPatte > nbPattes)
@@ -187,6 +194,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  			positionGenou = 1850;
 	  			positionPatte = 1500;
 			}
+
 			else if((noPatte <= 6) && (noPatte >= 4))
 			{
 				positionHanche = 1500;
@@ -194,6 +202,16 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  			positionPatte = 1500;
 			}
 		}
+
+		if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
+  		{
+  			repetition = 0;
+  			etat = automatique;
+  			etape = 0;
+  			quelAuto = 0;
+  			delaiFermer = 0;	//Repart le timer d'inactivite
+  		}
+
 		if(tabBoutons[boutonStart])	
   		{
   			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
@@ -206,13 +224,26 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 			if(tabBoutons[boutonBack])
 			{
 				startServos();	//Remet les servos a 1500
+				delaiFermer = 0;	//Repart le timer d'inactivite
+				repetition = 0;
 				quelAuto++;
 				etape = 0;
-				if (quelAuto > 3)
+				if (quelAuto > 2)
 				{
 					quelAuto = 0;
 				}
 			}
+
+			if(tabBoutons[boutonY])	
+	  		{
+	  			noPatte = 1;
+	  			etat = singleLeg;
+	  			positionHanche = 1500;
+	  			positionGenou = 1500;
+	  			positionPatte = 1500;
+	  			aEnvoye = true;
+	  			delaiFermer = 0;	//Repart le timer d'inactivite
+	  		}
 
 			if(tabBoutons[boutonStart])	
 	  		{
@@ -227,6 +258,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		if(tabBoutons[boutonStart])
   		{
   			etat = allume;
+  			delaiFermer = 0;	//Repart le timer d'inactivite
   			aEnvoye = true;
   		}
   		break;
@@ -310,6 +342,12 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   {  
   	int k = 0;
   	delaiI++;
+  	delaiFermer++;
+
+  	if(delaiFermer >= 4800)
+  	{
+  		etat = eteint;
+  	}
     
 	switch(etat)	//Mouvements a effectuer selon l'etat
 	{
@@ -327,6 +365,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     			for(int i = 0; i  < nbServos; i++)
     			{
     				tabServos[1][i] = 0;	//Eteint tous les servos
+    				aEnvoye = true;
     			}
     		}
     		break;
@@ -341,9 +380,25 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     				aEnvoye = true;
     			}
 
-    			if(tabAxes[axeHorizJoyGauche] != 0)
+    			if((tabAxes[axeHorizJoyGauche] != 0) && (noPatte != 3) && (noPatte !=6))
 				{
 					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
+
+					if(positionHanche <= 750)
+					{
+						positionHanche = 750;
+					}
+					if(positionHanche >= 2250)
+					{
+						positionHanche = 2250;
+					}
+					
+					aEnvoye = true;
+				}
+
+				else if(tabAxes[axeHorizJoyGauche] != 0)
+				{
+					positionHanche = positionHanche + (tabAxes[axeHorizJoyGauche]*10);
 
 					if(positionHanche <= 750)
 					{
@@ -470,7 +525,8 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     				case toctoc:
     					switch(etape)
     					{
-    						case 0:
+    						case 0:	//Permet a l'araignee de prendre sa position de base
+    							delaiFermer = 0;	//Pour ne pas que l'araignne s'eteigne
     							etape++;
     							break;
     						case 1:
@@ -565,9 +621,126 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     				case cancan:
     					switch(etape)
     					{
-    						case 0:
+    						case 0:	//Position de base de l'araignee
+    							delaiFermer = 0;	//Pour ne pas que l'araignne s'eteigne
+    							delaiI = 0;
+    							startServos();
+    							tabServos[1][0] = 2000;
+    							tabServos[1][6] = 1000;
+    							tabServos[1][9] = 1000;
+    							tabServos[1][15] = 2000;
+    							etape++;
+    						break;
+
+    						case 1:
+    							if(delaiI == 10)
+    							{
+    								tabServos[1][1] = 2500;
+	    							tabServos[1][2] = 2400;
+	    							tabServos[1][7] = 2500;
+	    							tabServos[1][8] = 2400;
+	    							tabServos[1][13] = 500;
+	    							tabServos[1][14] = 695;
+	    							etape++;
+    							}
+    						break;
+
+    						case 2:
+    							if(delaiI == 40)
+    							{
+	    							tabServos[1][1] = 2200;
+	    							tabServos[1][2] = 500;
+	    							tabServos[1][7] = 2200;
+	    							tabServos[1][8] = 500;
+	    							tabServos[1][13] = 700;
+	    							tabServos[1][14] = 2500;
+	    							etape++;
+    							}
+    						break;
+
+    						case 3:
+    							if(delaiI == 100)
+    							{
+    								tabServos[1][1] = 2500;
+	    							tabServos[1][2] = 2400;
+	    							tabServos[1][7] = 2500;
+	    							tabServos[1][8] = 2400;
+	    							tabServos[1][13] = 500;
+	    							tabServos[1][14] = 695;
+	    							etape++;
+    							}
+    						break;
+
+    						case 4:
+    							if(delaiI == 120)
+    							{
+    								tabServos[1][1] = 1500;
+	    							tabServos[1][2] = 1500;
+	    							tabServos[1][7] = 1400;
+	    							tabServos[1][8] = 1500;
+	    							tabServos[1][13] = 1500;
+	    							tabServos[1][14] = 1500;
+	    							etape++;
+    							}
+    						break;
+
+    						case 5:
+    							if(delaiI == 140)
+    							{
+    								tabServos[1][4] = 2500;
+	    							tabServos[1][5] = 2400;
+	    							tabServos[1][10] = 500;
+	    							tabServos[1][11] = 695;
+	    							tabServos[1][16] = 500;
+	    							tabServos[1][17] = 695;
+	    							etape++;
+    							}
+    						break;
+
+    						case 6:
+    							if(delaiI == 160)
+    							{
+    								tabServos[1][4] = 2200;
+	    							tabServos[1][5] = 500;
+	    							tabServos[1][10] = 700;
+	    							tabServos[1][11] = 2500;
+	    							tabServos[1][16] = 700;
+	    							tabServos[1][17] = 2500;
+	    							etape++;
+    							}
+    						break;
+
+    						case 7:
+    							if(delaiI == 220)
+    							{
+    								tabServos[1][4] = 2500;
+	    							tabServos[1][5] = 2400;
+	    							tabServos[1][10] = 500;
+	    							tabServos[1][11] = 695;
+	    							tabServos[1][16] = 500;
+	    							tabServos[1][17] = 695;
+	    							etape++;
+    							}
+    						break;
+
+    						case 8:
+    							if(delaiI == 240)
+    							{
+    								tabServos[1][4] = 1500;
+	    							tabServos[1][5] = 1500;
+	    							tabServos[1][10] = 1500;
+	    							tabServos[1][11] = 1500;
+	    							tabServos[1][16] = 1500;
+	    							tabServos[1][17] = 1500;
+    							}
+    							if (delaiI == 260)
+    							{
+    								etape = 0;
+    								repetition++;
+    							}
     						break;
     					}
+    					aEnvoye = true;
     					break;
 
     				case twist:
@@ -576,6 +749,12 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						case 0:
     						break;
     					}
+
+    			}
+    			if(repetition >= 10)
+    			{
+    				startServos();
+    				etat = allume;
     			}
     		}
 	}
