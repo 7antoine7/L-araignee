@@ -22,3 +22,13 @@ Les nodes ROS occupent plusieurs fonctions pour le robot.
 	C. Pour donner les droits d'écriture et de lecture a votre node, tapez `sudo chmod 777 <chemin d'accès du 		convertisseur>`
 	
 	D. Pour lancer la node, tapez `rosrun Araignnee_pkg talker_serie`
+	
+## Branches
+
+### Master
+
+Branche principale du projet, C'est la version actuelle du projet. Les fonctionnalitées qui ne sont pas encore terminés sont dans les autres branches.
+
+### String_publish
+
+Branche temporaire pour la communication entre robot_logic et talker_serie. Dans cette branche, au lieu d'envoyer une matrice, on ennvoi une string.
