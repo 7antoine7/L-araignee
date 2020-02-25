@@ -1,4 +1,4 @@
-l/*
+/*
  * Copyright (C) 2008, Morgan Quigley and Willow Garage, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,7 @@ using namespace std;
 #define nbPattes 6
 #define nbBoutons 11
 #define nbAxes 8
+#define nbAnimations 3
 
 #define boutonA 0
 #define boutonB 1
@@ -81,7 +82,12 @@ using namespace std;
 #define allume 0
 #define eteint 1
 #define singleLeg 2
-#define marche 3
+#define automatique 3
+#define marche 4
+
+#define toctoc 0
+#define cancan 1
+#define twist 2 
 
 void freeServos();
 void startServos();
@@ -89,14 +95,15 @@ void startServos();
 
 int testVal = 0;
 int prevButton = 0;
-int modeAuto = 0;
 int etape = 0;
 int animation = 0;
+int delaiI = 0;
 float testAnalog = 0.0f;
 float testAnalog2 = 0.0f;
 float distanceTest_ = 0.0f;
 std_msgs::String message;
 int etat = 0;
+int quelAuto = 0;
 bool aEnvoye = true;
 int valPrec = 0;
 int compteur;
@@ -113,48 +120,7 @@ int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 
-int iMarche = 0s;
-/*void modeAutomatique()
-{
-  switch(animation)
-  {
-    case 0:
-      swith(etape)
-      {
-        case 0:
-        etape++;
-        break;
-
-        case 1:
-        etape++;
-        break;
-
-        case 2:
-        etape++:
-        break;
-      }
-      break;
-
-    case 1:
-      swith(etape)
-      {
-        case 0:
-        etape++;
-        break;
-
-        case 1:
-        etape++;
-        break;
-
-        case 2:
-        etape++:
-        break;
-      }
-      break;
-        
-  }
-
-}*/
+//int iMarche = 0s;
 
 void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 { 
@@ -169,7 +135,6 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   	tabAxes[i] = msg->axes[i];	//Pour pouvoir acceder a la valeur des axes dans les mouvements
   } 
 
-  //modeAuto = tabBoutons[boutonBack];
 
   switch(etat)
   {
@@ -179,6 +144,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
   			aEnvoye = true;
   		}
+
   		if(tabBoutons[boutonY])	
   		{
   			noPatte = 1;
@@ -188,25 +154,44 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			positionPatte = 1500;
   			aEnvoye = true;
   		}
-		if(tabBoutons[boutonA])
+
+  		if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
+  		{
+  			etat = automatique;
+  			etape = 0;
+  			quelAuto = 0;
+  		}
+
+		/*if(tabBoutons[boutonA])
 		{
 			etat = marche;
 			iMarche = 0;
-		}
+		}*/
   		break;
 
   	case singleLeg:
 		if(tabBoutons[boutonBack])
 		{
 			startServos();
-			positionHanche = 1500;
-  			positionGenou = 1500;
-  			positionPatte = 1500;
+			delaiI = 0;			
   			aEnvoye = true;
 			noPatte++;
 			if(noPatte > nbPattes)
 			{
 				noPatte = 1;	//Revient a 1 apres 6
+			}
+
+			if((noPatte <= 3) && (noPatte >= 1))
+			{
+				positionHanche = 1500;
+	  			positionGenou = 1850;
+	  			positionPatte = 1500;
+			}
+			else if((noPatte <= 6) && (noPatte >= 4))
+			{
+				positionHanche = 1500;
+	  			positionGenou = 1150;
+	  			positionPatte = 1500;
 			}
 		}
 		if(tabBoutons[boutonStart])	
@@ -216,6 +201,28 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		}
 		break;
 
+	case automatique:
+		{
+			if(tabBoutons[boutonBack])
+			{
+				startServos();	//Remet les servos a 1500
+				quelAuto++;
+				etape = 0;
+				if (quelAuto > 3)
+				{
+					quelAuto = 0;
+				}
+			}
+
+			if(tabBoutons[boutonStart])	
+	  		{
+	  			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
+	  			aEnvoye = true;
+	  		}
+		}
+		break;
+
+
   	case eteint:
   		if(tabBoutons[boutonStart])
   		{
@@ -224,20 +231,6 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		}
   		break;
   }
-
-
-  /*if(modeAuto)
-  {
-    modeAuto = !modeAuto;
-    if(modeAuto)
-    {
-      modeAutomatique();
-    }
-    else
-    {
-      startServos();
-    }
-  }*/
 }
 
 /**
@@ -245,7 +238,6 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
  */
 int main(int argc, char **argv)
 {
-	int singleLegI = 0;
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line. For programmatic
@@ -317,7 +309,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   while (ros::ok())
   {  
   	int k = 0;
-
+  	delaiI++;
     
 	switch(etat)	//Mouvements a effectuer selon l'etat
 	{
@@ -341,6 +333,14 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
+    			if(delaiI == 15)
+    			{
+    				positionHanche = 1500;
+    				positionGenou = 1500;
+    				positionPatte = 1500;
+    				aEnvoye = true;
+    			}
+
     			if(tabAxes[axeHorizJoyGauche] != 0)
 				{
 					positionHanche = positionHanche - (tabAxes[axeHorizJoyGauche]*10);
@@ -389,9 +389,9 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					aEnvoye = true;
 				}
 
-				if((tabAxes[croixVert] != 0) && (noPatte <= 3) && (noPatte >= 1))
+				if((tabAxes[axeVertJoyDroit] != 0) && (noPatte <= 3) && (noPatte >= 1))
 				{
-					positionPatte = positionPatte - (tabAxes[croixVert]*10);
+					positionPatte = positionPatte - (tabAxes[axeVertJoyDroit]*10);
 
 					if(positionPatte <= 750)
 					{
@@ -405,9 +405,9 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					aEnvoye = true;
 				}
 
-				else if((tabAxes[croixVert] != 0) && (noPatte <= 6) && (noPatte >= 4))
+				else if((tabAxes[axeVertJoyDroit] != 0) && (noPatte <= 6) && (noPatte >= 4))
 				{
-					positionPatte = positionPatte + (tabAxes[croixVert]*10);
+					positionPatte = positionPatte + (tabAxes[axeVertJoyDroit]*10);
 
 					if(positionPatte <= 750)
 					{
@@ -421,6 +421,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					aEnvoye = true;
 				}
 
+				//Partie qui gere la modification du tableau a envoye selon la patte selectionnee
     			switch(noPatte)
     			{
     				case 1:
@@ -460,7 +461,123 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 						break;
     			}
     		}
+    		break;
 
+    	case automatique:
+    		{
+    			switch(quelAuto)
+    			{
+    				case toctoc:
+    					switch(etape)
+    					{
+    						case 0:
+    							etape++;
+    							break;
+    						case 1:
+    							delaiI = 0;
+    							tabServos[1][1] = 1850;
+    							etape++;
+    							break;
+    						case 2:
+    							if(delaiI == 10)
+    							{
+    								tabServos[1][1] = 1500;
+    								etape++;
+    							} 
+    							break;   							
+    						case 3:
+    							if(delaiI == 20)
+    							{
+	    							tabServos[1][4] = 1850;
+	    							etape++;
+	    						}
+	    						break;
+    						case 4:
+    							if(delaiI == 30)
+    							{
+	    							tabServos[1][4] = 1500;
+	    							etape++;
+	    						}
+	    						break;
+    						case 5:
+    							if(delaiI == 40)
+    							{
+	    							tabServos[1][7] = 1850;
+	    							etape++;
+	    						}
+	    						break;
+    						case 6:
+    							if(delaiI == 50)
+    							{
+	    							tabServos[1][7] = 1500;
+	    							etape++;
+	    						}
+	    						break;
+    						case 7:
+    							if(delaiI == 60)
+    							{
+	    							tabServos[1][16] = 1150;
+	    							etape++;
+	    						}
+	    						break;
+    						case 8:
+    							if(delaiI == 70)
+    							{
+	    							tabServos[1][16] = 1500;
+	    							etape++;
+	    						}
+	    						break;
+    						case 9:
+    							if(delaiI == 80)
+    							{
+	    							tabServos[1][13] = 1150;
+	    							etape++;
+	    						}
+	    						break;
+    						case 10:
+    							if(delaiI == 90)
+    							{
+	    							tabServos[1][13] = 1500;
+	    							etape++;
+	    						}
+	    						break;
+    						case 11:
+    							if(delaiI == 100)
+    							{
+	    							tabServos[1][10] = 1150;
+	    							etape++;
+	    						}
+	    						break;
+    						case 12:
+    							if(delaiI == 110)
+    							{
+	    							tabServos[1][10] = 1500;
+	    						}
+	    						if(delaiI == 120)
+	    						{
+	    							etape = 0;
+	    						}
+	    						break;
+    					}
+    					aEnvoye = true;
+    					break;
+
+    				case cancan:
+    					switch(etape)
+    					{
+    						case 0:
+    						break;
+    					}
+    					break;
+
+    				case twist:
+    					switch(etape)
+    					{
+    						case 0:
+    						break;
+    					}
+    			}
+    		}
 	}
 
 	if(aEnvoye)
