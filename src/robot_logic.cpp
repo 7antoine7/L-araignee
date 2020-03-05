@@ -152,10 +152,10 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		{
   			noPatte = 1;
   			etat = singleLeg;
-  			positionHanche = 1500;
-  			positionGenou = 1500;
-  			positionPatte = 1500;
-  			aEnvoye = true;
+  			//positionHanche = 1500;
+  			//positionGenou = 1500;
+  			//positionPatte = 1500;
+  			//aEnvoye = true;
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
@@ -181,7 +181,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 			startServos();
 			delaiFermer = 0;	//Repart le timer d'inactivite
 			delaiI = 0;	//Repart le compteur entre les etapes			
-  			aEnvoye = true;
+  			//aEnvoye = true;
 			noPatte++;
 			if(noPatte > nbPattes)
 			{
@@ -238,9 +238,9 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  		{
 	  			noPatte = 1;
 	  			etat = singleLeg;
-	  			positionHanche = 1500;
-	  			positionGenou = 1500;
-	  			positionPatte = 1500;
+	  			//positionHanche = 1500;
+	  			//positionGenou = 1500;
+	  			//positionPatte = 1500;
 	  			aEnvoye = true;
 	  			delaiFermer = 0;	//Repart le timer d'inactivite
 	  		}
@@ -258,6 +258,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		if(tabBoutons[boutonStart])
   		{
   			etat = allume;
+  			startServos();
   			delaiFermer = 0;	//Repart le timer d'inactivite
   			aEnvoye = true;
   		}
@@ -315,7 +316,7 @@ int main(int argc, char **argv)
 // SECTION THAT DEFINES THE INFORMATIONS THAT OUR NODE WILL PUBLISH
   //ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter_logic", 1000);
   //ros::Publisher myJoy_pub = n.advertise<geometry_msgs::Twist>("cmd_vel", 10);
-  ros::Publisher serial = n.advertise<std_msgs::String>("serial_topic", 1000);
+  ros::Publisher serial = n.advertise<std_msgs::String>("serial_topic", 1000, true); //le true pour latcher le message.
 // %EndTag(PUBLISHER)%
 
 // %Tag(LOOP_RATE)%
@@ -341,6 +342,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   while (ros::ok())
   {  
   	int k = 0;
+  	int nbPause = 0;
   	delaiI++;
   	delaiFermer++;
 
@@ -353,10 +355,10 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	{
 		case allume:	//L'araignee est en fonction
     		{
-    			for(int i = 0; i  < nbServos; i++)
+    			/*for(int i = 0; i  < nbServos; i++)
     			{
     				tabServos[1][i] = 1500;	//Met l'araignee en position de base
-    			}
+    			}*/
     		}
     		break;
 
@@ -365,7 +367,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     			for(int i = 0; i  < nbServos; i++)
     			{
     				tabServos[1][i] = 0;	//Eteint tous les servos
-    				aEnvoye = true;
     			}
     		}
     		break;
@@ -527,18 +528,22 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     					{
     						case 0:	//Permet a l'araignee de prendre sa position de base
     							delaiFermer = 0;	//Pour ne pas que l'araignne s'eteigne
+    							startServos();
+    							nbPause = 0;
     							etape++;
     							break;
     						case 1:
     							delaiI = 0;
     							tabServos[1][1] = 1850;
     							etape++;
+    							aEnvoye = true;
     							break;
     						case 2:
     							if(delaiI == 10)
     							{
     								tabServos[1][1] = 1500;
     								etape++;
+    								aEnvoye = true;
     							} 
     							break;   							
     						case 3:
@@ -546,6 +551,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][4] = 1850;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 4:
@@ -553,6 +559,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][4] = 1500;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 5:
@@ -560,6 +567,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][7] = 1850;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 6:
@@ -567,6 +575,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][7] = 1500;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 7:
@@ -574,6 +583,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][16] = 1150;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 8:
@@ -581,6 +591,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][16] = 1500;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 9:
@@ -588,6 +599,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][13] = 1150;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 10:
@@ -595,6 +607,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][13] = 1500;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 11:
@@ -602,20 +615,29 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							{
 	    							tabServos[1][10] = 1150;
 	    							etape++;
+	    							aEnvoye = true;
 	    						}
 	    						break;
     						case 12:
     							if(delaiI == 110)
     							{
 	    							tabServos[1][10] = 1500;
+	    							repetition++;
+	    							if(repetition == 10)
+					    			{
+					    				quelAuto++;
+					    				etat = automatique;
+					    				repetition = 0;
+					    				etape = 0;
+					    			}
 	    						}
 	    						if(delaiI == 120)
 	    						{
 	    							etape = 0;
 	    						}
+	    						aEnvoye = true;
 	    						break;
     					}
-    					aEnvoye = true;
     					break;
 
     				case cancan:
@@ -642,6 +664,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][13] = 500;
 	    							tabServos[1][14] = 695;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -655,6 +678,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][13] = 700;
 	    							tabServos[1][14] = 2500;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -668,6 +692,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][13] = 500;
 	    							tabServos[1][14] = 695;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -681,6 +706,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][13] = 1500;
 	    							tabServos[1][14] = 1500;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -694,6 +720,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][16] = 500;
 	    							tabServos[1][17] = 695;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -707,6 +734,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][16] = 700;
 	    							tabServos[1][17] = 2500;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -720,6 +748,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][16] = 500;
 	    							tabServos[1][17] = 695;
 	    							etape++;
+	    							aEnvoye = true;
     							}
     						break;
 
@@ -732,30 +761,45 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][11] = 1500;
 	    							tabServos[1][16] = 1500;
 	    							tabServos[1][17] = 1500;
+	    							aEnvoye = true;
     							}
     							if (delaiI == 260)
     							{
     								etape = 0;
     								repetition++;
+    								if(repetition == 10)
+					    			{
+					    				startServos();
+					    				quelAuto++;
+					    				etat = automatique;
+					    				repetition = 0;
+					    			}
     							}
     						break;
     					}
-    					aEnvoye = true;
     					break;
 
     				case twist:
     					switch(etape)
     					{
     						case 0:
+    							freeServos();
+    							nbPause++;
+    							if(nbPause == 1)
+    							{
+    								aEnvoye = true;
+    							}
+    							repetition++;
+    							if(repetition == 1600)
+    							{
+    								repetition = 0;
+    								quelAuto = 0;
+    							}
     						break;
     					}
 
     			}
-    			if(repetition >= 10)
-    			{
-    				startServos();
-    				etat = allume;
-    			}
+
     		}
 	}
 
@@ -769,7 +813,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 		}
 		serie = serie + "\r";
 		message.data = serie;
-		ROS_INFO("%s\n", message.data.c_str());
+		//ROS_INFO("%s\n", message.data.c_str());
 	  	serial.publish(message);
 	  	aEnvoye = false;  
 	}
@@ -786,22 +830,13 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   return 0;
 }
 
-/*void freeServos()
+void freeServos()
 {
-  string serie("");
-  string patte("");
-
-
-  for(int i = 0; i < 32; i++)
+  for (int i = 0; i < nbServos; i++)
   {
-    patte = to_string(i);
-    serie += "#" + patte + "P0";
-    //ROS_INFO("%s\n", serie.c_str());
+  	tabServos[1][i] = 0;
   }
-
-  serie += "\r";
-  //return serie;
-}*/
+}
 
 void startServos()
 {
