@@ -368,6 +368,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   {  
   	int k = 0;
   	int nbPause = 0;
+	int envoiUneFois = 0;
   	delaiI++;	//Pour mettre un delai entre les etapes
   	delaiFermer++;	//Pour le mode de mise en veille
 
@@ -828,194 +829,196 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     		}
 		case marche:
 		{
-			if(tabAxes[axeVertJoyGauche] < 0)
+			if(tabAxes[axeVertJoyGauche] > 0)
 			{
 				switch(etape)
 				{
 					case 0:
 						//tripod A vertical
 						tabServos[1][1] = 1500;
-						tabServos[1][9] = 1500;
-						tabServos[1][21] = 1500;
+						tabServos[1][7] = 1500;
+						tabServos[1][13] = 1500;
 						//tripod A horizontal
 						tabServos[1][0] = 1900;
-						tabServos[1][8] = 1000;
-						tabServos[1][20] = 1500;
+						tabServos[1][6] = 1000;
+						tabServos[1][12] = 1500;
 						//tripod B vertical
-						tabServos[1][5] = 2030;
-						tabServos[1][17] = 900;
-						tabServos[1][25] = 825;
+						tabServos[1][4] = 2030;
+						tabServos[1][10] = 900;
+						tabServos[1][16] = 825;
 						//tripod B horizontal
-						tabServos[1][4] = 1500;
-						tabServos[1][16] = 1100;
-						tabServos[1][24] = 2000;
+						tabServos[1][3] = 1500;
+						tabServos[1][9] = 1100;
+						tabServos[1][15] = 2000;
 						aEnvoye = true;
+						envoiUneFois = 0;
 						delaiI = 0;
 						etape++;
 						break;
+
 					case 1:
-						if(delaiI == 80)
+						if(delaiI == 60)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1500;
-							tabServos[1][9] = 1500;
-							tabServos[1][21] = 1500;
+							tabServos[1][7] = 1500;
+							tabServos[1][13] = 1500;
 							//tripod A horizontal
 							tabServos[1][0] = 1400;
-							tabServos[1][8] = 500;
-							tabServos[1][20] = 2000;
+							tabServos[1][6] = 500;
+							tabServos[1][12] = 2000;
 							//tripod B vertical
-							tabServos[1][5] = 1730;
-							tabServos[1][17] = 1200;
-							tabServos[1][25] = 1125;
+							tabServos[1][4] = 1730;
+							tabServos[1][10] = 1200;
+							tabServos[1][16] = 1125;
 							//tripod B horizontal
-							tabServos[1][4] = 1900;
-							tabServos[1][16] = 825;
-							tabServos[1][24] = 1500;
+							tabServos[1][3] = 1900;
+							tabServos[1][9] = 825;
+							tabServos[1][15] = 1500;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 2:
-						if(delaiI == 160)
+						if(delaiI == 120)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1500;
-							tabServos[1][9] = 1500;
-							tabServos[1][21] = 1500;
+							tabServos[1][7] = 1500;
+							tabServos[1][13] = 1500;
 							//tripod A horizontal
 							tabServos[1][0] = 1400;
-							tabServos[1][8] = 500;
-							tabServos[1][20] = 2000;
+							tabServos[1][6] = 500;
+							tabServos[1][12] = 2000;
 							//tripod B vertical
-							tabServos[1][5] = 1500;
-							tabServos[1][17] = 1500;
-							tabServos[1][25] = 1500;
+							tabServos[1][4] = 1500;
+							tabServos[1][10] = 1500;
+							tabServos[1][16] = 1500;
 							//tripod B horizontal
-							tabServos[1][4] = 1900;
-							tabServos[1][16] = 825;
-							tabServos[1][24] = 1500;
+							tabServos[1][3] = 1900;
+							tabServos[1][9] = 825;
+							tabServos[1][15] = 1500;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 3:
-						if(delaiI == 240)
+						if(delaiI == 180)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1870;
-							tabServos[1][9] = 1750;
-							tabServos[1][21] = 1295;
+							tabServos[1][7] = 1750;
+							tabServos[1][13] = 1295;
 							//tripod A horizontal
 							tabServos[1][0] = 1400;
-							tabServos[1][8] = 500;
-							tabServos[1][20] = 2000;
+							tabServos[1][6] = 500;
+							tabServos[1][12] = 2000;
 							//tripod B vertical
-							tabServos[1][5] = 1500;
-							tabServos[1][17] = 1500;
-							tabServos[1][25] = 1500;
+							tabServos[1][4] = 1500;
+							tabServos[1][10] = 1500;
+							tabServos[1][16] = 1500;
 							//tripod B horizontal
-							tabServos[1][4] = 1900;
-							tabServos[1][16] = 825;
-							tabServos[1][24] = 1500;
+							tabServos[1][3] = 1900;
+							tabServos[1][9] = 825;
+							tabServos[1][15] = 1500;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 4:
-						if(delaiI == 320)
+						if(delaiI == 240)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 2140;
-							tabServos[1][9] = 1750;
-							tabServos[1][21] = 1295;
+							tabServos[1][7] = 1750;
+							tabServos[1][13] = 1295;
 							//tripod A horizontal
 							tabServos[1][0] = 1900;
-							tabServos[1][8] = 1000;
-							tabServos[1][20] = 1500;
+							tabServos[1][6] = 1000;
+							tabServos[1][12] = 1500;
 							//tripod B vertical
-							tabServos[1][5] = 1500;
-							tabServos[1][17] = 1500;
-							tabServos[1][25] = 1500;
-							//tripod B horizontal
 							tabServos[1][4] = 1500;
-							tabServos[1][16] = 1100;
-							tabServos[1][24] = 2000;
+							tabServos[1][10] = 1500;
+							tabServos[1][16] = 1500;
+							//tripod B horizontal
+							tabServos[1][3] = 1500;
+							tabServos[1][9] = 1100;
+							tabServos[1][15] = 2000;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 5:
-						if(delaiI == 400)
+						if(delaiI == 300)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1870;
-							tabServos[1][9] = 1750;
-							tabServos[1][21] = 1295;
+							tabServos[1][7] = 1750;
+							tabServos[1][13] = 1295;
 							//tripod A horizontal
 							tabServos[1][0] = 2400;
-							tabServos[1][8] = 1500;
-							tabServos[1][20] = 1000;
+							tabServos[1][6] = 1500;
+							tabServos[1][12] = 1000;
 							//tripod B vertical
-							tabServos[1][5] = 1730;
-							tabServos[1][17] = 1200;
-							tabServos[1][25] = 1125;
+							tabServos[1][4] = 1730;
+							tabServos[1][10] = 1200;
+							tabServos[1][16] = 1125;
 							//tripod B horizontal
-							tabServos[1][4] = 1000;
-							tabServos[1][16] = 1600;
-							tabServos[1][24] = 2500;
+							tabServos[1][3] = 1000;
+							tabServos[1][9] = 1600;
+							tabServos[1][15] = 2500;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 6:
-						if(delaiI == 480)
+						if(delaiI == 360)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1500;
-							tabServos[1][9] = 1500;
-							tabServos[1][21] = 1500;
+							tabServos[1][7] = 1500;
+							tabServos[1][13] = 1500;
 							//tripod A horizontal
 							tabServos[1][0] = 2400;
-							tabServos[1][8] = 1500;
-							tabServos[1][20] = 1000;
+							tabServos[1][6] = 1500;
+							tabServos[1][12] = 1000;
 							//tripod B vertical
-							tabServos[1][5] = 1500;
-							tabServos[1][17] = 1500;
-							tabServos[1][25] = 1500;
+							tabServos[1][4] = 1500;
+							tabServos[1][10] = 1500;
+							tabServos[1][16] = 1500;
 							//tripod B horizontal
-							tabServos[1][4] = 1000;
-							tabServos[1][16] = 1600;
-							tabServos[1][24] = 2500;
+							tabServos[1][3] = 1000;
+							tabServos[1][9] = 1600;
+							tabServos[1][15] = 2500;
 							aEnvoye = true;
 							etape++;
 							break;
 						}
 						
 					case 7:
-						if(delaiI == 540)
+						if(delaiI == 420)
 						{
 							//tripod A vertical
 							tabServos[1][1] = 1500;
-							tabServos[1][9] = 1500;
-							tabServos[1][21] = 1500;
+							tabServos[1][7] = 1500;
+							tabServos[1][13] = 1500;
 							//tripod A horizontal
 							tabServos[1][0] = 2400;
-							tabServos[1][8] = 1500;
-							tabServos[1][20] = 1000;
+							tabServos[1][6] = 1500;
+							tabServos[1][12] = 1000;
 							//tripod B vertical
-							tabServos[1][5] = 1730;
-							tabServos[1][17] = 1200;
-							tabServos[1][25] = 1125;
+							tabServos[1][4] = 1730;
+							tabServos[1][10] = 1200;
+							tabServos[1][16] = 1125;
 							//tripod B horizontal
-							tabServos[1][4] = 1000;
-							tabServos[1][16] = 1600;
-							tabServos[1][24] = 2500;
+							tabServos[1][3] = 1000;
+							tabServos[1][9] = 1600;
+							tabServos[1][15] = 2500;
 							aEnvoye = true;
 							if(delaiI == 620)
 							{
@@ -1026,6 +1029,18 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 						
 				}
 			}
+
+			else
+			{
+				envoiUneFois++;
+				if(envoiUneFois == 1)
+				{
+					startServos();
+					etape = 0;
+					aEnvoye = true;
+				}
+			}
+			
 			
 		}
 	
