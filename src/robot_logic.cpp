@@ -87,7 +87,8 @@ using namespace std;
 
 #define toctoc 0
 #define cancan 1
-#define twist 2 
+//#define twist 2
+#define pause 2 
 
 void freeServos();
 void startServos();
@@ -144,7 +145,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   	case allume:
   		if(tabBoutons[boutonStart])	
   		{
-  			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
+  			etat = eteint;	//Envoie l'instruction d'eteindre l'araignee
   			aEnvoye = true;
   		}
 
@@ -207,8 +208,8 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		{
   			repetition = 0;
   			etat = automatique;
-  			etape = 0;
-  			quelAuto = 0;
+  			etape = 0;	//Commence au debut de l'automatisme
+  			quelAuto = 0;	//Commence au premier automatisme
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
@@ -779,7 +780,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     					}
     					break;
 
-    				case twist:
+    				case pause:
     					switch(etape)
     					{
     						case 0:
