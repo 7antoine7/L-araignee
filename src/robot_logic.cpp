@@ -123,7 +123,7 @@ int tabServos [4][18] = {{0,1,2,4,5,6,8,9,10,16,17,18,20,21,22,24,25,26},
 						 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 
-//int iMarche = 0s;
+
 
 void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 { 
@@ -168,7 +168,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		if(tabBoutons[boutonA])
 		{
 			etat = marche;
-			iMarche = 0;
+			etape = 0;
 		}
   		break;
 
@@ -219,7 +219,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		if(tabBoutons[boutonA])
 		{
 			etat = marche;
-			iMarche = 0;
+			etape = 0;
 		}
 
 	case automatique:
@@ -826,7 +826,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     			}
 
     		}
-		case(marche)
+		case marche:
 		{
 			if(tabAxes[axeVertJoyGauche] < 0)
 			{
@@ -1016,7 +1016,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 							tabServos[1][4] = 1000;
 							tabServos[1][16] = 1600;
 							tabServos[1][24] = 2500;
-							aEnvoye = true
+							aEnvoye = true;
 							if(delaiI == 620)
 							{
 								etape = 0;
