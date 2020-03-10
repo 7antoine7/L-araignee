@@ -153,10 +153,6 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		{
   			noPatte = 1;
   			etat = singleLeg;
-  			//positionHanche = 1500;
-  			//positionGenou = 1500;
-  			//positionPatte = 1500;
-  			//aEnvoye = true;
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
@@ -169,11 +165,11 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
-		/*if(tabBoutons[boutonA])
+		if(tabBoutons[boutonA])
 		{
 			etat = marche;
 			iMarche = 0;
-		}*/
+		}
   		break;
 
   	case singleLeg:
@@ -220,6 +216,12 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   		}
 		break;
 
+		if(tabBoutons[boutonA])
+		{
+			etat = marche;
+			iMarche = 0;
+		}
+
 	case automatique:
 		{
 			if(tabBoutons[boutonBack])
@@ -239,9 +241,6 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  		{
 	  			noPatte = 1;
 	  			etat = singleLeg;
-	  			//positionHanche = 1500;
-	  			//positionGenou = 1500;
-	  			//positionPatte = 1500;
 	  			aEnvoye = true;
 	  			delaiFermer = 0;	//Repart le timer d'inactivite
 	  		}
@@ -264,6 +263,31 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			aEnvoye = true;
   		}
   		break;
+
+	case marche:
+		{
+			if(tabBoutons[boutonStart])	
+			{
+				etat = eteint;	//Envoie l'instruction d'eteindre l'araignee
+				aEnvoye = true;
+			}
+
+			if(tabBoutons[boutonY])	
+			{
+				noPatte = 1;
+				etat = singleLeg;
+				delaiFermer = 0;	//Repart le timer d'inactivite
+			}
+
+			if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
+			{
+				repetition = 0;
+				etat = automatique;
+				etape = 0;
+				quelAuto = 0;
+				delaiFermer = 0;	//Repart le timer d'inactivite
+			}
+		}
   }
 }
 
@@ -344,8 +368,8 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   {  
   	int k = 0;
   	int nbPause = 0;
-  	delaiI++;
-  	delaiFermer++;
+  	delaiI++;	//Pour mettre un delai entre les etapes
+  	delaiFermer++;	//Pour le mode de mise en veille
 
   	if(delaiFermer >= 4800)
   	{
@@ -802,6 +826,209 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     			}
 
     		}
+		case(marche)
+		{
+			if(tabAxes[axeVertJoyGauche] < 0)
+			{
+				switch(etape)
+				{
+					case 0:
+						//tripod A vertical
+						tabServos[1][1] = 1500;
+						tabServos[1][9] = 1500;
+						tabServos[1][21] = 1500;
+						//tripod A horizontal
+						tabServos[1][0] = 1900;
+						tabServos[1][8] = 1000;
+						tabServos[1][20] = 1500;
+						//tripod B vertical
+						tabServos[1][5] = 2030;
+						tabServos[1][17] = 900;
+						tabServos[1][25] = 825;
+						//tripod B horizontal
+						tabServos[1][4] = 1500;
+						tabServos[1][16] = 1100;
+						tabServos[1][24] = 2000;
+						aEnvoye = true;
+						delaiI = 0;
+						etape++;
+						break;
+					case 1:
+						if(delaiI == 80)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1500;
+							tabServos[1][9] = 1500;
+							tabServos[1][21] = 1500;
+							//tripod A horizontal
+							tabServos[1][0] = 1400;
+							tabServos[1][8] = 500;
+							tabServos[1][20] = 2000;
+							//tripod B vertical
+							tabServos[1][5] = 1730;
+							tabServos[1][17] = 1200;
+							tabServos[1][25] = 1125;
+							//tripod B horizontal
+							tabServos[1][4] = 1900;
+							tabServos[1][16] = 825;
+							tabServos[1][24] = 1500;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 2:
+						if(delaiI == 160)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1500;
+							tabServos[1][9] = 1500;
+							tabServos[1][21] = 1500;
+							//tripod A horizontal
+							tabServos[1][0] = 1400;
+							tabServos[1][8] = 500;
+							tabServos[1][20] = 2000;
+							//tripod B vertical
+							tabServos[1][5] = 1500;
+							tabServos[1][17] = 1500;
+							tabServos[1][25] = 1500;
+							//tripod B horizontal
+							tabServos[1][4] = 1900;
+							tabServos[1][16] = 825;
+							tabServos[1][24] = 1500;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 3:
+						if(delaiI == 240)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1870;
+							tabServos[1][9] = 1750;
+							tabServos[1][21] = 1295;
+							//tripod A horizontal
+							tabServos[1][0] = 1400;
+							tabServos[1][8] = 500;
+							tabServos[1][20] = 2000;
+							//tripod B vertical
+							tabServos[1][5] = 1500;
+							tabServos[1][17] = 1500;
+							tabServos[1][25] = 1500;
+							//tripod B horizontal
+							tabServos[1][4] = 1900;
+							tabServos[1][16] = 825;
+							tabServos[1][24] = 1500;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 4:
+						if(delaiI == 320)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 2140;
+							tabServos[1][9] = 1750;
+							tabServos[1][21] = 1295;
+							//tripod A horizontal
+							tabServos[1][0] = 1900;
+							tabServos[1][8] = 1000;
+							tabServos[1][20] = 1500;
+							//tripod B vertical
+							tabServos[1][5] = 1500;
+							tabServos[1][17] = 1500;
+							tabServos[1][25] = 1500;
+							//tripod B horizontal
+							tabServos[1][4] = 1500;
+							tabServos[1][16] = 1100;
+							tabServos[1][24] = 2000;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 5:
+						if(delaiI == 400)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1870;
+							tabServos[1][9] = 1750;
+							tabServos[1][21] = 1295;
+							//tripod A horizontal
+							tabServos[1][0] = 2400;
+							tabServos[1][8] = 1500;
+							tabServos[1][20] = 1000;
+							//tripod B vertical
+							tabServos[1][5] = 1730;
+							tabServos[1][17] = 1200;
+							tabServos[1][25] = 1125;
+							//tripod B horizontal
+							tabServos[1][4] = 1000;
+							tabServos[1][16] = 1600;
+							tabServos[1][24] = 2500;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 6:
+						if(delaiI == 480)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1500;
+							tabServos[1][9] = 1500;
+							tabServos[1][21] = 1500;
+							//tripod A horizontal
+							tabServos[1][0] = 2400;
+							tabServos[1][8] = 1500;
+							tabServos[1][20] = 1000;
+							//tripod B vertical
+							tabServos[1][5] = 1500;
+							tabServos[1][17] = 1500;
+							tabServos[1][25] = 1500;
+							//tripod B horizontal
+							tabServos[1][4] = 1000;
+							tabServos[1][16] = 1600;
+							tabServos[1][24] = 2500;
+							aEnvoye = true;
+							etape++;
+							break;
+						}
+						
+					case 7:
+						if(delaiI == 540)
+						{
+							//tripod A vertical
+							tabServos[1][1] = 1500;
+							tabServos[1][9] = 1500;
+							tabServos[1][21] = 1500;
+							//tripod A horizontal
+							tabServos[1][0] = 2400;
+							tabServos[1][8] = 1500;
+							tabServos[1][20] = 1000;
+							//tripod B vertical
+							tabServos[1][5] = 1730;
+							tabServos[1][17] = 1200;
+							tabServos[1][25] = 1125;
+							//tripod B horizontal
+							tabServos[1][4] = 1000;
+							tabServos[1][16] = 1600;
+							tabServos[1][24] = 2500;
+							aEnvoye = true
+							if(delaiI == 620)
+							{
+								etape = 0;
+							}
+							break;
+						}
+						
+				}
+			}
+			
+		}
+	
 	}
 
 	if(aEnvoye)
