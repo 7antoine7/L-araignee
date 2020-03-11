@@ -85,6 +85,8 @@ using namespace std;
 #define automatique 3
 #define marche 4
 
+#define nbAutomatismes 3
+
 #define toctoc 0
 #define cancan 1
 //#define twist 2
@@ -101,12 +103,10 @@ int animation = 0;
 int delaiI = 0;
 int repetition = 0;
 int delaiFermer = 0;
-float testAnalog = 0.0f;
-float testAnalog2 = 0.0f;
-float distanceTest_ = 0.0f;
 std_msgs::String message;
-int etat = 0;
-int quelAuto = 0;
+int etat = eteint;
+int quelAuto = toctoc;
+int envoiUneFois = 0;
 bool aEnvoye = true;
 int valPrec = 0;
 int compteur;
@@ -161,7 +161,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			repetition = 0;
   			etat = automatique;
   			etape = 0;
-  			quelAuto = 0;
+  			quelAuto = toctoc;
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
@@ -177,8 +177,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 		{
 			startServos();
 			delaiFermer = 0;	//Repart le timer d'inactivite
-			delaiI = 0;	//Repart le compteur entre les etapes			
-  			//aEnvoye = true;
+			delaiI = 0;	//Repart le compteur entre les etapes
 			noPatte++;
 			if(noPatte > nbPattes)
 			{
@@ -205,7 +204,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			repetition = 0;
   			etat = automatique;
   			etape = 0;	//Commence au debut de l'automatisme
-  			quelAuto = 0;	//Commence au premier automatisme
+  			quelAuto = toctoc;	//Commence au premier automatisme
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
@@ -231,9 +230,9 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 				repetition = 0;
 				quelAuto++;
 				etape = 0;
-				if (quelAuto > 2)
+				if (quelAuto >= nbAutomatismes)
 				{
-					quelAuto = 0;
+					quelAuto = toctoc;
 				}
 			}
 
@@ -284,10 +283,11 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 				repetition = 0;
 				etat = automatique;
 				etape = 0;
-				quelAuto = 0;
+				quelAuto = toctoc;
 				delaiFermer = 0;	//Repart le timer d'inactivite
 			}
 		}
+		break;
   }
 }
 
@@ -368,7 +368,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   {  
   	int k = 0;
   	int nbPause = 0;
-	int envoiUneFois = 0;
   	delaiI++;	//Pour mettre un delai entre les etapes
   	delaiFermer++;	//Pour le mode de mise en veille
 
@@ -695,7 +694,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 2:
-    							if(delaiI == 40)
+    							if(delaiI == 60)
     							{
 	    							tabServos[1][1] = 2200;
 	    							tabServos[1][2] = 500;
@@ -709,7 +708,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 3:
-    							if(delaiI == 100)
+    							if(delaiI == 110)
     							{
     								tabServos[1][1] = 2500;
 	    							tabServos[1][2] = 2400;
@@ -723,7 +722,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 4:
-    							if(delaiI == 120)
+    							if(delaiI == 160)
     							{
     								tabServos[1][1] = 1500;
 	    							tabServos[1][2] = 1500;
@@ -737,7 +736,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 5:
-    							if(delaiI == 140)
+    							if(delaiI == 210)
     							{
     								tabServos[1][4] = 2500;
 	    							tabServos[1][5] = 2400;
@@ -751,7 +750,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 6:
-    							if(delaiI == 160)
+    							if(delaiI == 260)
     							{
     								tabServos[1][4] = 2200;
 	    							tabServos[1][5] = 500;
@@ -765,7 +764,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 7:
-    							if(delaiI == 220)
+    							if(delaiI == 310)
     							{
     								tabServos[1][4] = 2500;
 	    							tabServos[1][5] = 2400;
@@ -779,7 +778,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     						break;
 
     						case 8:
-    							if(delaiI == 240)
+    							if(delaiI == 360)
     							{
     								tabServos[1][4] = 1500;
 	    							tabServos[1][5] = 1500;
@@ -789,7 +788,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 	    							tabServos[1][17] = 1500;
 	    							aEnvoye = true;
     							}
-    							if (delaiI == 260)
+    							if (delaiI == 410)
     							{
     								etape = 0;
     								repetition++;
@@ -819,231 +818,113 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     							if(repetition == 1600)
     							{
     								repetition = 0;
-    								quelAuto = 0;
+    								quelAuto = toctoc;
     							}
     						break;
     					}
-
+						break;
     			}
 
     		}
+			break;
+			
 		case marche:
-		{
-			if(tabAxes[axeVertJoyGauche] > 0)
 			{
-				switch(etape)
+				if(tabAxes[axeVertJoyGauche] > 0)
 				{
-					case 0:
-						//tripod A vertical
-						tabServos[1][1] = 1500;
-						tabServos[1][7] = 1500;
-						tabServos[1][13] = 1500;
-						//tripod A horizontal
-						tabServos[1][0] = 1900;
-						tabServos[1][6] = 1000;
-						tabServos[1][12] = 1500;
-						//tripod B vertical
-						tabServos[1][4] = 2030;
-						tabServos[1][10] = 900;
-						tabServos[1][16] = 825;
-						//tripod B horizontal
-						tabServos[1][3] = 1500;
-						tabServos[1][9] = 1100;
-						tabServos[1][15] = 2000;
-						aEnvoye = true;
-						envoiUneFois = 0;
-						delaiI = 0;
-						etape++;
-						break;
-
-					case 1:
-						if(delaiI == 60)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1500;
-							tabServos[1][7] = 1500;
-							tabServos[1][13] = 1500;
-							//tripod A horizontal
-							tabServos[1][0] = 1400;
-							tabServos[1][6] = 500;
-							tabServos[1][12] = 2000;
-							//tripod B vertical
-							tabServos[1][4] = 1730;
-							tabServos[1][10] = 1200;
-							tabServos[1][16] = 1125;
-							//tripod B horizontal
-							tabServos[1][3] = 1900;
-							tabServos[1][9] = 825;
-							tabServos[1][15] = 1500;
-							aEnvoye = true;
-							etape++;
-							break;
-						}
-						
-					case 2:
-						if(delaiI == 120)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1500;
-							tabServos[1][7] = 1500;
-							tabServos[1][13] = 1500;
-							//tripod A horizontal
-							tabServos[1][0] = 1400;
-							tabServos[1][6] = 500;
-							tabServos[1][12] = 2000;
-							//tripod B vertical
-							tabServos[1][4] = 1500;
-							tabServos[1][10] = 1500;
-							tabServos[1][16] = 1500;
-							//tripod B horizontal
-							tabServos[1][3] = 1900;
-							tabServos[1][9] = 825;
-							tabServos[1][15] = 1500;
-							aEnvoye = true;
-							etape++;
-							break;
-						}
-						
-					case 3:
-						if(delaiI == 180)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1870;
-							tabServos[1][7] = 1750;
-							tabServos[1][13] = 1295;
-							//tripod A horizontal
-							tabServos[1][0] = 1400;
-							tabServos[1][6] = 500;
-							tabServos[1][12] = 2000;
-							//tripod B vertical
-							tabServos[1][4] = 1500;
-							tabServos[1][10] = 1500;
-							tabServos[1][16] = 1500;
-							//tripod B horizontal
-							tabServos[1][3] = 1900;
-							tabServos[1][9] = 825;
-							tabServos[1][15] = 1500;
-							aEnvoye = true;
-							etape++;
-							break;
-						}
-						
-					case 4:
-						if(delaiI == 240)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 2140;
-							tabServos[1][7] = 1750;
-							tabServos[1][13] = 1295;
-							//tripod A horizontal
-							tabServos[1][0] = 1900;
-							tabServos[1][6] = 1000;
-							tabServos[1][12] = 1500;
-							//tripod B vertical
-							tabServos[1][4] = 1500;
-							tabServos[1][10] = 1500;
-							tabServos[1][16] = 1500;
-							//tripod B horizontal
+					switch(etape)
+					{
+						case 0:
+							tabServos[1][0] = 2100;
+							tabServos[1][1] = 1750;
 							tabServos[1][3] = 1500;
-							tabServos[1][9] = 1100;
-							tabServos[1][15] = 2000;
-							aEnvoye = true;
-							etape++;
-							break;
-						}
-						
-					case 5:
-						if(delaiI == 300)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1870;
+							tabServos[1][6] = 1300;
 							tabServos[1][7] = 1750;
-							tabServos[1][13] = 1295;
-							//tripod A horizontal
-							tabServos[1][0] = 2400;
-							tabServos[1][6] = 1500;
-							tabServos[1][12] = 1000;
-							//tripod B vertical
-							tabServos[1][4] = 1730;
-							tabServos[1][10] = 1200;
-							tabServos[1][16] = 1125;
-							//tripod B horizontal
-							tabServos[1][3] = 1000;
-							tabServos[1][9] = 1600;
-							tabServos[1][15] = 2500;
+							tabServos[1][9] = 1100;
+							tabServos[1][12] = 1175;
+							tabServos[1][13] = 1250;
+							tabServos[1][15] = 1900;
 							aEnvoye = true;
+							envoiUneFois = 0;
+							delaiI = 0;
 							etape++;
 							break;
-						}
-						
-					case 6:
-						if(delaiI == 360)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1500;
-							tabServos[1][7] = 1500;
-							tabServos[1][13] = 1500;
-							//tripod A horizontal
-							tabServos[1][0] = 2400;
-							tabServos[1][6] = 1500;
-							tabServos[1][12] = 1000;
-							//tripod B vertical
-							tabServos[1][4] = 1500;
-							tabServos[1][10] = 1500;
-							tabServos[1][16] = 1500;
-							//tripod B horizontal
-							tabServos[1][3] = 1000;
-							tabServos[1][9] = 1600;
-							tabServos[1][15] = 2500;
-							aEnvoye = true;
-							etape++;
+
+						case 1:
+							if(delaiI == 20)
+							{
+								tabServos[1][1] = 1500;
+								tabServos[1][7] = 1500;
+								tabServos[1][13] = 1500;
+								aEnvoye = true;
+								etape++;
+							}
 							break;
-						}
-						
-					case 7:
-						if(delaiI == 420)
-						{
-							//tripod A vertical
-							tabServos[1][1] = 1500;
-							tabServos[1][7] = 1500;
-							tabServos[1][13] = 1500;
-							//tripod A horizontal
-							tabServos[1][0] = 2400;
-							tabServos[1][6] = 1500;
-							tabServos[1][12] = 1000;
-							//tripod B vertical
-							tabServos[1][4] = 1730;
-							tabServos[1][10] = 1200;
-							tabServos[1][16] = 1125;
-							//tripod B horizontal
-							tabServos[1][3] = 1000;
-							tabServos[1][9] = 1600;
-							tabServos[1][15] = 2500;
-							aEnvoye = true;
-							if(delaiI == 620)
+							
+						case 2:
+							if(delaiI == 40)
+							{
+								tabServos[1][0] = 1800;
+								tabServos[1][3] = 1700;
+								tabServos[1][4] = 1750;
+								tabServos[1][6] = 1000;
+								tabServos[1][9] = 900;
+								tabServos[1][10] = 1250;
+								tabServos[1][12] = 1475;
+								tabServos[1][13] = 1575;
+								tabServos[1][15] = 1700;
+								tabServos[1][16] = 1250;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+							
+						case 3:
+							if(delaiI == 60)
+							{
+								tabServos[1][4] = 1500;
+								tabServos[1][10] = 1500;
+								tabServos[1][16] = 1500;
+								aEnvoye = true;
+							}
+							if(delaiI == 80)
 							{
 								etape = 0;
 							}
 							break;
-						}
-						
+					}
+					break;
 				}
-			}
 
-			else
-			{
-				envoiUneFois++;
-				if(envoiUneFois == 1)
+				else
 				{
-					startServos();
-					etape = 0;
-					aEnvoye = true;
-				}
+					envoiUneFois++;
+					if(envoiUneFois == 1)
+					{
+						//Remet l'araignee en position de base pour marcher
+						tabServos[1][0] = 1900;
+						tabServos[1][1] = 1500;
+						tabServos[1][2] = 1500;
+						tabServos[1][3] = 1500;
+						tabServos[1][4] = 1500;
+						tabServos[1][5] = 1500;
+						tabServos[1][6] = 1100;
+						tabServos[1][7] = 1500;
+						tabServos[1][8] = 1500;
+						tabServos[1][9] = 1100;
+						tabServos[1][10] = 1500;
+						tabServos[1][11] = 1500;
+						tabServos[1][12] = 1375;
+						tabServos[1][13] = 1500;
+						tabServos[1][14] = 1500;
+						tabServos[1][15] = 1900;
+						tabServos[1][16] = 1500;
+						tabServos[1][17] = 1500;
+						etape = 0;
+						aEnvoye = true;
+					}
+				}			
 			}
-			
-			
-		}
-	
 	}
 
 	if(aEnvoye)
@@ -1054,9 +935,9 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 		{
 			serie = serie + "#" + to_string(tabServos[0][i]) + "P" + to_string(tabServos[1][i]);
 		}
-		serie = serie + "\r";
+		serie = serie + "T250" + "\r";
 		message.data = serie;
-		//ROS_INFO("%s\n", message.data.c_str());
+		ROS_INFO("%s\n", message.data.c_str());
 	  	serial.publish(message);
 	  	aEnvoye = false;  
 	}
