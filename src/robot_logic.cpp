@@ -845,7 +845,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 							tabServos[1][13] = 1250;
 							tabServos[1][15] = 1900;
 							aEnvoye = true;
-							envoiUneFois = 0;
+							envoiUneFois = 0;	//Remet la variable a 0 pour eviter d'entrer dans le else et envoyer des strings sans arret
 							delaiI = 0;
 							etape++;
 							break;
@@ -901,25 +901,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					envoiUneFois++;
 					if(envoiUneFois == 1)
 					{
-						//Remet l'araignee en position de base pour marcher
-						tabServos[1][0] = 1900;
-						tabServos[1][1] = 1500;
-						tabServos[1][2] = 1500;
-						tabServos[1][3] = 1500;
-						tabServos[1][4] = 1500;
-						tabServos[1][5] = 1500;
-						tabServos[1][6] = 1100;
-						tabServos[1][7] = 1500;
-						tabServos[1][8] = 1500;
-						tabServos[1][9] = 1100;
-						tabServos[1][10] = 1500;
-						tabServos[1][11] = 1500;
-						tabServos[1][12] = 1375;
-						tabServos[1][13] = 1500;
-						tabServos[1][14] = 1500;
-						tabServos[1][15] = 1900;
-						tabServos[1][16] = 1500;
-						tabServos[1][17] = 1500;
 						etape = 0;
 						aEnvoye = true;
 					}
