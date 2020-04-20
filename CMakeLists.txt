@@ -209,14 +209,15 @@ include_directories(
 #
 #    Node pour la manette
 #
-add_executable(joystick_node src/joystick_node.cpp)
-target_link_libraries(joystick_node ${catkin_LIBRARIES})
+# add_executable(joystick_node src/joystick_node.cpp)
+# target_link_libraries(joystick_node ${catkin_LIBRARIES})*/
 
 #
 #    Node pour la communication serie
 #
 add_executable(talker_serie src/talker_serie.cpp)
 target_link_libraries(talker_serie ${catkin_LIBRARIES})
+
 #
 #    Node pour la logique du robot
 #
