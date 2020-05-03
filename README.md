@@ -22,6 +22,11 @@ Les nodes ROS occupent plusieurs fonctions pour le robot.
 	C. Pour donner les droits d'écriture et de lecture a votre node, tapez `sudo chmod 777 <chemin d'accès du 		convertisseur>`
 	
 	D. Pour lancer la node, tapez `rosrun Araignnee_pkg talker_serie`
+
+3. Interface Web
+	La page web est fait pour comuniquer avec ROS via Websocket. Pour que Ros recoive les
+	données par web socket, il faut oartir un serveur avec la commande 
+	`roslaunch rosbridge_server rosbridge_websocket.launch`  
 	
 ## Branches
 
@@ -31,4 +36,4 @@ Branche principale du projet, C'est la version actuelle du projet. Les fonctionn
 
 ### String_publish
 
-Branche temporaire pour la communication entre robot_logic et talker_serie. Dans cette branche, au lieu d'envoyer une matrice, on ennvoi une string.
+Branche temporaire pour tester la communication entre robot_logic et talker_serie.
