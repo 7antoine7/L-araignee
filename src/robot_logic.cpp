@@ -79,18 +79,24 @@ using namespace std;
 #define croixHoriz 6
 #define croixVert 7
 
-#define allume 0
+#define marche 0
 #define eteint 1
 #define singleLeg 2
 #define automatique 3
-#define marche 4
 
 #define nbAutomatismes 3
 
 #define toctoc 0
 #define cancan 1
 //#define twist 2
-#define pause 2 
+#define pause 2
+
+#define delai1 20
+#define delai2 40
+#define delai3 60
+#define delai4 80
+//#define delai5 100
+//#define delai6 120
 
 void freeServos();
 void startServos();
@@ -108,12 +114,12 @@ int etat = eteint;
 int quelAuto = toctoc;
 int envoiUneFois = 0;
 bool aEnvoye = true;
-int valPrec = 0;
 int compteur;
 int noPatte = 0;
 int positionHanche = 0;
 int positionGenou = 0;
 int positionPatte = 0;
+int servoT = 0;
 float tabAxes[8];
 float tabBoutons[11];
 int tabAEnvoye[72];
@@ -142,7 +148,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
   switch(etat)
   {
-  	case allume:
+  	case marche:
   		if(tabBoutons[boutonStart])	
   		{
   			etat = eteint;	//Envoie l'instruction d'eteindre l'araignee
@@ -164,16 +170,10 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			quelAuto = toctoc;
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
-
-		if(tabBoutons[boutonA])
-		{
-			etat = marche;
-			etape = 0;
-		}
   		break;
 
   	case singleLeg:
-		if(tabBoutons[boutonBack])
+		if(tabBoutons[boutonBack])	//Change de patte a controle
 		{
 			startServos();
 			delaiFermer = 0;	//Repart le timer d'inactivite
@@ -184,6 +184,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 				noPatte = 1;	//Revient a 1 apres 6
 			}
 
+			//Fait monter la patte selectionnee, elle redescend au debut du case singleLeg de l'autre machine a etat
 			if((noPatte <= 3) && (noPatte >= 1))
 			{
 				positionHanche = 1500;
@@ -191,6 +192,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  			positionPatte = 1500;
 			}
 
+			//Fait monter la patte selectionnee, elle redescend au debut du case singleLeg de l'autre machine a etat
 			else if((noPatte <= 6) && (noPatte >= 4))
 			{
 				positionHanche = 1500;
@@ -199,7 +201,7 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 			}
 		}
 
-		if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
+		if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))	//Met l'araigne en mode automatique
   		{
   			repetition = 0;
   			etat = automatique;
@@ -208,14 +210,13 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   			delaiFermer = 0;	//Repart le timer d'inactivite
   		}
 
-		if(tabBoutons[boutonStart])	
+		if(tabBoutons[boutonStart])		//Eteint l'araignee
   		{
   			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
   			aEnvoye = true;
   		}
-		break;
 
-		if(tabBoutons[boutonA])
+		if(tabBoutons[boutonA])	//Met l'araignee en mode marche
 		{
 			etat = marche;
 			etape = 0;
@@ -249,6 +250,12 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
 	  			etat = eteint;	//Envoie l'innstruction d'eteindre l'araignee
 	  			aEnvoye = true;
 	  		}
+
+			if(tabBoutons[boutonA])	//Met l'araignee en mode marche
+			{
+				etat = marche;
+				etape = 0;
+			}
 		}
 		break;
 
@@ -256,38 +263,12 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
   	case eteint:
   		if(tabBoutons[boutonStart])
   		{
-  			etat = allume;
+  			etat = marche;
   			startServos();
   			delaiFermer = 0;	//Repart le timer d'inactivite
   			aEnvoye = true;
   		}
   		break;
-
-	case marche:
-		{
-			if(tabBoutons[boutonStart])	
-			{
-				etat = eteint;	//Envoie l'instruction d'eteindre l'araignee
-				aEnvoye = true;
-			}
-
-			if(tabBoutons[boutonY])	
-			{
-				noPatte = 1;
-				etat = singleLeg;
-				delaiFermer = 0;	//Repart le timer d'inactivite
-			}
-
-			if((tabAxes[boutonLT] == -1) && (tabAxes[boutonRT] == -1))
-			{
-				repetition = 0;
-				etat = automatique;
-				etape = 0;
-				quelAuto = toctoc;
-				delaiFermer = 0;	//Repart le timer d'inactivite
-			}
-		}
-		break;
   }
 }
 
@@ -296,6 +277,13 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& msg)
  */
 int main(int argc, char **argv)
 {
+	int k = 0;
+  	int nbPause = 0;
+	float calcul = 0;
+	float valPrecHoriz = 0.0;
+	float valPrecVert = 0.0;
+	float delaiBaseVert = 0.0;
+	float delaiBaseHoriz = 0.0;
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line. For programmatic
@@ -366,8 +354,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
   while (ros::ok())
   {  
-  	int k = 0;
-  	int nbPause = 0;
   	delaiI++;	//Pour mettre un delai entre les etapes
   	delaiFermer++;	//Pour le mode de mise en veille
 
@@ -378,15 +364,6 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     
 	switch(etat)	//Mouvements a effectuer selon l'etat
 	{
-		case allume:	//L'araignee est en fonction
-    		{
-    			/*for(int i = 0; i  < nbServos; i++)
-    			{
-    				tabServos[1][i] = 1500;	//Met l'araignee en position de base
-    			}*/
-    		}
-    		break;
-
     	case eteint:
     		{
     			for(int i = 0; i  < nbServos; i++)
@@ -398,7 +375,8 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case singleLeg:
     		{
-    			if(delaiI == 15)
+				servoT = 0;
+    			if(delaiI == 15)	//Fait resdescendre la patte selectionne
     			{
     				positionHanche = 1500;
     				positionGenou = 1500;
@@ -546,6 +524,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 
     	case automatique:
     		{
+				servoT = 0;
     			switch(quelAuto)
     			{
     				case toctoc:
@@ -830,64 +809,136 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 			
 		case marche:
 			{
-				if(tabAxes[axeVertJoyGauche] > 0)
+				if(abs(valPrecVert - tabAxes[axeVertJoyGauche]) > 0.1)
 				{
+					delaiBaseVert = (-66.67*(abs(tabAxes[axeVertJoyGauche]))) + 86.67;
+					delaiI = delaiBaseVert * (etape - 1);
+					if(etape == 0)
+					{
+						delaiI = 0;
+					}
+					valPrecVert = tabAxes[axeVertJoyGauche];
+				}
+				
+				else if(abs(valPrecHoriz - tabAxes[axeHorizJoyGauche]) > 0.1)
+				{
+					delaiBaseHoriz = (-66.67*(abs(tabAxes[axeHorizJoyGauche]))) + 86.67;
+					delaiI = delaiBaseHoriz * (etape - 1);
+					if(etape == 0)
+					{
+						delaiI = 0;
+					}
+					valPrecHoriz = tabAxes[axeHorizJoyGauche];
+				}
+
+				//Section qui fait avancer l'araignee
+				if ((tabAxes[axeVertJoyGauche] > 0.2) && (tabAxes[axeHorizJoyGauche] < 0.5) && (tabAxes[axeHorizJoyGauche] > -0.5))
+				{
+					servoT = ((int)delaiBaseVert*1000)/80;
 					switch(etape)
 					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
 						case 0:
-							tabServos[1][0] = 2100;
-							tabServos[1][1] = 1750;
-							tabServos[1][3] = 1500;
-							tabServos[1][6] = 1300;
-							tabServos[1][7] = 1750;
-							tabServos[1][9] = 1100;
-							tabServos[1][12] = 1175;
-							tabServos[1][13] = 1250;
-							tabServos[1][15] = 1900;
+							tabServos[1][0] = 1700;
+							tabServos[1][1] = 1800;
+							tabServos[1][2] = 1700;
+							tabServos[1][3] = 1350;
+							tabServos[1][4] = 1500;
+							tabServos[1][5] = 1500;
+							tabServos[1][6] = 1695;
+							tabServos[1][7] = 1700;
+							tabServos[1][8] = 1200;
+							tabServos[1][9] = 1500;
+							tabServos[1][10] = 1500;
+							tabServos[1][11] = 1700;
+							tabServos[1][12] = 1350;
+							tabServos[1][13] = 1300;
+							tabServos[1][14] = 1500;
+							tabServos[1][15] = 1500;
+							tabServos[1][16] = 1500;
+							tabServos[1][17] = 1300;
 							aEnvoye = true;
-							envoiUneFois = 0;	//Remet la variable a 0 pour eviter d'entrer dans le else et envoyer des strings sans arret
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
 							delaiI = 0;
 							etape++;
 							break;
-
+							
+						
+						//A partir de cette etape on ecrit que les index qui changent
 						case 1:
-							if(delaiI == 20)
+							if(delaiI == (int)delaiBaseVert)
 							{
 								tabServos[1][1] = 1500;
-								tabServos[1][7] = 1500;
-								tabServos[1][13] = 1500;
+								tabServos[1][3] = 1500;
+								tabServos[1][7] = 1340;
+								tabServos[1][11] = 1500;
+								tabServos[1][13] = 1630;
+								tabServos[1][17] = 1500;
 								aEnvoye = true;
 								etape++;
 							}
 							break;
 							
 						case 2:
-							if(delaiI == 40)
+							if(delaiI == (int)(delaiBaseVert*etape))
 							{
-								tabServos[1][0] = 1800;
-								tabServos[1][3] = 1700;
-								tabServos[1][4] = 1750;
-								tabServos[1][6] = 1000;
-								tabServos[1][9] = 900;
-								tabServos[1][10] = 1250;
-								tabServos[1][12] = 1475;
-								tabServos[1][13] = 1575;
-								tabServos[1][15] = 1700;
-								tabServos[1][16] = 1250;
+								tabServos[1][2] = 1800;
+								tabServos[1][4] = 1700;
+								tabServos[1][7] = 1260;
+								tabServos[1][10] = 1300;
+								tabServos[1][16] = 1300;
 								aEnvoye = true;
 								etape++;
 							}
 							break;
 							
 						case 3:
-							if(delaiI == 60)
+							if(delaiI == (int)(delaiBaseVert*etape))
 							{
+								tabServos[1][0] = 1500;
+								tabServos[1][1] = 1430;
+								tabServos[1][2] = 1300;
+								tabServos[1][3] = 1775;
+								tabServos[1][6] = 1500;
+								tabServos[1][7] = 1500;
+								tabServos[1][8] = 1700;
+								tabServos[1][9] = 1300;
+								tabServos[1][11] = 1200;
+								tabServos[1][12] = 1650;
+								tabServos[1][13] = 1650;
+								tabServos[1][15] = 1300;
+								tabServos[1][17] = 1800;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 4:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][1] = 1500;
+								tabServos[1][3] = 1750;
 								tabServos[1][4] = 1500;
+								tabServos[1][10] = 1475;
+								tabServos[1][11] = 1300;
+								tabServos[1][16] = 1730;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 5:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][1] = 1700;
+								tabServos[1][3] = 1775;
+								tabServos[1][7] = 1700;
 								tabServos[1][10] = 1500;
-								tabServos[1][16] = 1500;
+								tabServos[1][11] = 1200;
+								tabServos[1][13] = 1350;
 								aEnvoye = true;
 							}
-							if(delaiI == 80)
+							else if(delaiI == (int)(delaiBaseVert*6))	//Delai entre etape 5 et etape 0
 							{
 								etape = 0;
 							}
@@ -896,16 +947,460 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 					break;
 				}
 
+				//Section qui fait reculer l'araignee
+				else if ((tabAxes[axeVertJoyGauche] < -0.1) && (tabAxes[axeHorizJoyGauche] < 0.5) && (tabAxes[axeHorizJoyGauche] > -0.5))
+				{
+					servoT = ((int)delaiBaseVert*1000)/80;
+					switch(etape)
+					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
+						case 0:
+							tabServos[1][0] = 1500;
+							tabServos[1][1] = 1700;
+							tabServos[1][2] = 1300;
+							tabServos[1][3] = 1775;
+							tabServos[1][4] = 1500;
+							tabServos[1][5] = 1500;
+							tabServos[1][6] = 1500;
+							tabServos[1][7] = 1700;
+							tabServos[1][8] = 1700;
+							tabServos[1][9] = 1300;
+							tabServos[1][10] = 1500;
+							tabServos[1][11] = 1200;
+							tabServos[1][12] = 1650;
+							tabServos[1][13] = 1350;
+							tabServos[1][14] = 1500;
+							tabServos[1][15] = 1300;
+							tabServos[1][16] = 1730;
+							tabServos[1][17] = 1800;
+							aEnvoye = true;
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
+							delaiI = 0;
+							etape++;
+							break;
+
+						//A partir de cette etape on ecrit que les index qui changent
+						case 1:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][2] = 1500;
+								tabServos[1][3] = 1775;
+								tabServos[1][7] = 1500;
+								tabServos[1][10] = 1475;
+								tabServos[1][11] = 1300;
+								tabServos[1][13] = 1650;								
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 2:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][1] = 1430;
+								tabServos[1][3] = 1775;
+								tabServos[1][4] = 1700;
+								tabServos[1][10] = 1300;
+								tabServos[1][11] = 1200;
+								tabServos[1][16] = 1300;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 3:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][0] = 1700;
+								tabServos[1][1] = 1700;
+								tabServos[1][2] = 1500;
+								tabServos[1][3] = 1500;
+								tabServos[1][6] = 1695;
+								tabServos[1][7] = 1260;
+								tabServos[1][8] = 1200;
+								tabServos[1][9] = 1500;
+								tabServos[1][11] = 1500;
+								tabServos[1][12] = 1350;
+								tabServos[1][13] = 1630;
+								tabServos[1][15] = 1500;
+								tabServos[1][17] = 1500;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 4:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][2] = 1700;
+								tabServos[1][4] = 1500;
+								tabServos[1][7] = 1340;
+								tabServos[1][10] = 1500;
+								tabServos[1][16] = 1500;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 5:
+							if(delaiI == (int)(delaiBaseVert*etape))
+							{
+								tabServos[1][1] = 1800;
+								tabServos[1][3] = 1350;
+								tabServos[1][7] = 1700;
+								tabServos[1][11] = 1700;
+								tabServos[1][13] = 1300;
+								tabServos[1][17] = 1300;
+								aEnvoye = true;
+							}
+							else if(delaiI == (int)(delaiBaseVert*6))
+							{
+								etape = 0;
+							}
+							break;
+					}
+					break;
+				}
+
+				//Section qui fait bouger de cote vers la droite
+				else if ((tabAxes[axeHorizJoyGauche] < -0.1) && (tabAxes[axeVertJoyGauche] < 0.5) && (tabAxes[axeVertJoyGauche] > -0.5))
+				{
+					servoT = ((int)delaiBaseHoriz*1000)/80;
+					switch(etape)
+					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
+						case 0:
+							tabServos[1][0] = 1500;
+							tabServos[1][1] = 1700;
+							tabServos[1][2] = 1500;
+							tabServos[1][3] = 1500;
+							tabServos[1][4] = 1400;
+							tabServos[1][5] = 1700;
+							tabServos[1][6] = 1500;
+							tabServos[1][7] = 1700;
+							tabServos[1][8] = 1500;
+							tabServos[1][9] = 1300;
+							tabServos[1][10] = 1700;
+							tabServos[1][11] = 1700;
+							tabServos[1][12] = 1500;
+							tabServos[1][13] = 1300;
+							tabServos[1][14] = 1500;
+							tabServos[1][15] = 1700;
+							tabServos[1][16] = 1600;
+							tabServos[1][17] = 1500;
+							aEnvoye = true;
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
+							delaiI = 0;
+							etape++;
+							break;
+						
+						//A partir de cette etape on ecrit que les index qui changent
+						case 1:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][1] = 1500;
+								tabServos[1][4] = 1500;
+								tabServos[1][7] = 1500;
+								tabServos[1][10] = 1600;
+								tabServos[1][13] = 1600;
+								tabServos[1][14] = 1400;
+								tabServos[1][17] = 1700;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 2:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][0] = 1300;
+								tabServos[1][2] = 1700;
+								tabServos[1][4] = 1800;
+								tabServos[1][6] = 1700;
+								tabServos[1][8] = 1700;
+								tabServos[1][9] = 1500;
+								tabServos[1][10] = 1200;
+								tabServos[1][11] = 1300;
+								tabServos[1][14] = 1700;
+								tabServos[1][15] = 1500;
+								tabServos[1][16] = 1200;
+								tabServos[1][17] = 1200;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 3:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][4] = 1500;
+								tabServos[1][5] = 1500;
+								tabServos[1][10] = 1500;
+								tabServos[1][11] = 1400;
+								tabServos[1][16] = 1500;
+								aEnvoye = true;
+							}
+							else if(delaiI == (int)(delaiBaseHoriz*4))
+							{
+								etape = 0;
+							}
+							break;
+					}
+					break;
+				}
+
+				//Section qui fait bouger de cote vers la gauche
+				else if ((tabAxes[axeHorizJoyGauche] > 0.1) && (tabAxes[axeVertJoyGauche] < 0.5) && (tabAxes[axeVertJoyGauche] > -0.5))
+				{
+					servoT = ((int)delaiBaseHoriz*1000)/80;
+					switch(etape)
+					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
+						case 0:
+							tabServos[1][0] = 1300;
+							tabServos[1][1] = 1300;
+							tabServos[1][2] = 1700;
+							tabServos[1][3] = 1500;
+							tabServos[1][4] = 1500;
+							tabServos[1][5] = 1500;
+							tabServos[1][6] = 1700;
+							tabServos[1][7] = 1500;
+							tabServos[1][8] = 1700;
+							tabServos[1][9] = 1500;
+							tabServos[1][10] = 1500;
+							tabServos[1][11] = 1400;
+							tabServos[1][12] = 1500;
+							tabServos[1][13] = 1600;
+							tabServos[1][14] = 1700;
+							tabServos[1][15] = 1500;
+							tabServos[1][16] = 1500;
+							tabServos[1][17] = 1200;
+							aEnvoye = true;
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
+							delaiI = 0;
+							etape++;
+							break;
+						
+						//A partir de cette etape on ecrit que les index qui changent
+						case 1:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][4] = 1800;
+								tabServos[1][5] = 1700;
+								tabServos[1][10] = 1200;
+								tabServos[1][11] = 1300;
+								tabServos[1][16] = 1200;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 2:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][0] = 1500;
+								tabServos[1][2] = 1500;
+								tabServos[1][4] = 1500;
+								tabServos[1][6] = 1500;
+								tabServos[1][8] = 1500;
+								tabServos[1][9] = 1300;
+								tabServos[1][10] = 1600;
+								tabServos[1][11] = 1700;
+								tabServos[1][14] = 1400;
+								tabServos[1][15] = 1700;
+								tabServos[1][16] = 1600;
+								tabServos[1][17] = 1700;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 3:
+							if(delaiI == (int)(delaiBaseHoriz*etape))
+							{
+								tabServos[1][1] = 1700;
+								tabServos[1][4] = 1400;
+								tabServos[1][7] = 1700;
+								tabServos[1][10] = 1700;
+								tabServos[1][13] = 1300;
+								tabServos[1][14] = 1500;
+								tabServos[1][17] = 1500;
+								aEnvoye = true;
+							}
+							else if(delaiI == (int)(delaiBaseHoriz*4))
+							{
+								etape = 0;
+							}
+							break;
+					}
+					break;
+				}
+
+				//Section qui fait tourner l'araignee vers la droite
+				else if(tabBoutons[boutonRB])
+				{
+					switch(etape)
+					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
+						case 0:
+							tabServos[1][0] = 1800;
+							tabServos[1][1] = 1500;
+							tabServos[1][2] = 1500;
+							tabServos[1][3] = 1200;
+							tabServos[1][4] = 1800;
+							tabServos[1][5] = 1500;
+							tabServos[1][6] = 1700;
+							tabServos[1][7] = 1500;
+							tabServos[1][8] = 1500;
+							tabServos[1][9] = 1300;
+							tabServos[1][10] = 1200;
+							tabServos[1][11] = 1500;
+							tabServos[1][12] = 1800;
+							tabServos[1][13] = 1500;
+							tabServos[1][14] = 1500;
+							tabServos[1][15] = 1300;
+							tabServos[1][16] = 1200;
+							tabServos[1][17] = 1350;
+							aEnvoye = true;
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
+							delaiI = 0;
+							etape++;
+							break;
+						
+						//A partir de cette etape on ecrit que les index qui changent
+						case 1:
+							if(delaiI == delai1)
+							{
+								tabServos[1][4] = 1400;
+								tabServos[1][10] = 1500;
+								tabServos[1][16] = 1500;
+								aEnvoye = true;
+								etape++;
+							}
+							break;							
+
+						case 2:
+							if(delaiI == delai2)
+							{
+								tabServos[1][0] = 1500;
+								tabServos[1][1] = 1800;
+								tabServos[1][3] = 1800;
+								tabServos[1][6] = 1300;
+								tabServos[1][7] = 1800;
+								tabServos[1][9] = 1700;
+								tabServos[1][12] = 1300;
+								tabServos[1][13] = 1200;
+								tabServos[1][15] = 1700;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 3:
+							if(delaiI == delai3)
+							{
+								tabServos[1][1] = 1500;
+								tabServos[1][7] = 1500;
+								tabServos[1][12] = 1400;
+								tabServos[1][13] = 1500;
+								aEnvoye = true;
+							}
+							else if(delaiI == delai4)
+							{
+								etape = 0;
+							}
+							
+					}
+				}
+
+				//Section qui fait tourner l'araignee vers la gauche
+				else if(tabBoutons[boutonLB])
+				{
+					switch(etape)
+					{
+						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
+						case 0:
+							tabServos[1][0] = 1500;
+							tabServos[1][1] = 1500;
+							tabServos[1][2] = 1500;
+							tabServos[1][3] = 1800;
+							tabServos[1][4] = 1400;
+							tabServos[1][5] = 1500;
+							tabServos[1][6] = 1300;
+							tabServos[1][7] = 1500;
+							tabServos[1][8] = 1500;
+							tabServos[1][9] = 1700;
+							tabServos[1][10] = 1500;
+							tabServos[1][11] = 1500;
+							tabServos[1][12] = 1400;
+							tabServos[1][13] = 1500;
+							tabServos[1][14] = 1500;
+							tabServos[1][15] = 1700;
+							tabServos[1][16] = 1500;
+							tabServos[1][17] = 1350;
+							aEnvoye = true;
+							envoiUneFois = 0;	//Remet la variable a 0 pour envoyer la consigne de remettre l'etape a 0 une seule fois quand le bouton est relache
+							delaiI = 0;
+							etape++;
+							break;
+
+						//A partir de cette etape on ecrit que les index qui changent
+						case 1:
+							if(delaiI == delai1)
+							{
+								tabServos[1][1] = 1800;
+								tabServos[1][7] = 1800;
+								tabServos[1][12] = 1300;
+								tabServos[1][13] = 1200;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+
+						case 2:
+							if(delaiI == delai2)
+							{
+								tabServos[1][0] = 1800;
+								tabServos[1][1] = 1500;
+								tabServos[1][3] = 1200;
+								tabServos[1][6] = 1700;
+								tabServos[1][7] = 1500;
+								tabServos[1][9] = 1300;
+								tabServos[1][12] = 1800;
+								tabServos[1][13] = 1500;
+								tabServos[1][15] = 1300;
+								aEnvoye = true;
+								etape++;
+							}
+							break;
+						
+						case 3:
+							if(delaiI == delai3)
+							{
+								tabServos[1][4] = 1800;
+								tabServos[1][10] = 1200;
+								tabServos[1][16] = 1200;
+								aEnvoye = true;
+							}
+							else if(delaiI == delai4)
+							{
+								etape = 0;
+							}
+					}
+				}
+							
 				else
 				{
+					//Des que le bouton est relache, remet l'araigne en position de base
 					envoiUneFois++;
-					if(envoiUneFois == 1)
+					if(envoiUneFois == 1)	//Assure d'envoyer la position de base une seule fois
 					{
 						etape = 0;
-						aEnvoye = true;
+						startServos();
 					}
 				}			
 			}
+			break;
 	}
 
 	if(aEnvoye)
@@ -916,11 +1411,16 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 		{
 			serie = serie + "#" + to_string(tabServos[0][i]) + "P" + to_string(tabServos[1][i]);
 		}
-		serie = serie + "T250" + "\r";
+		if(servoT != 0)
+		{
+			serie = serie + "T" + to_string(servoT);
+		}
+		serie = serie + "\r";
+		
 		message.data = serie;
 		ROS_INFO("%s\n", message.data.c_str());
 	  	serial.publish(message);
-	  	aEnvoye = false;  
+	  	aEnvoye = false;  //Chaque fois qu'une string est envoyee on le remet a faux pour ne pas l'envoyer plusieurs fois
 	}
 	// %Tag(SPINONCE)%
     ros::spinOnce();
@@ -935,6 +1435,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
   return 0;
 }
 
+//Fonction qui eteint l'araignee
 void freeServos()
 {
   for (int i = 0; i < nbServos; i++)
@@ -943,6 +1444,7 @@ void freeServos()
   }
 }
 
+// Fonction qui remet l'araignee a sa position de base
 void startServos()
 {
   for (int i = 0; i < nbServos; i++)
