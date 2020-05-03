@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/opt/ros/melodic/include/**",
+                "/home/tge/projet_ws/src/araignee_pkg/include/**",
+                "/home/tge/catkin_ws/src/beginner_tutorials/include/**",
+                "/home/tge/robot_ws/src/robot_pkg/include/**",
+                "/home/tge/test_ws/src/test_pkg/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

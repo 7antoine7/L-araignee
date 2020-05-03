@@ -1,0 +1,295 @@
+<!DOCTYPE HTML>
+<! -- The MIT License (MIT) This file is part of the JoyStick Project (https://github.com/bobboteck/JoyStick). Copyright
+	(c) 2015 Roberto D'Amico (Bobboteck). Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software" ), to deal in the Software without restriction,
+	including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following
+	conditions: The above copyright notice and this permission notice shall be included in all copies or substantial
+	portions of the Software. THE SOFTWARE IS PROVIDED "AS IS" , WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
+	<html>
+
+	<head>
+		<title>Araignée</title>
+		<meta charset="utf-8">
+		<meta name="author" content"Antoine Leroux">
+		<link rel="shortcut icon" type="image/png" href="spiderIcon.png">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<style>
+			* {
+				touch-action: manipulation;
+			}
+
+			body {
+				margin: 0px;
+				padding: 0px;
+				font-family: monospace;
+
+			}
+
+			h1 {
+				display: inline;
+
+
+			}
+
+			.row {
+				display: inline-flex;
+				clear: both;
+
+			}
+
+			.columnLateral {
+				width: 100%;
+
+			}
+
+			#joystick {
+				border: 1px solid #000000;
+			}
+
+			.slidecontainer {
+				width: 100%;
+				/* Width of the outside container */
+			}
+
+			/* The slider itself */
+			.slider {
+				-webkit-appearance: none;
+				/* Override default CSS styles */
+				appearance: none;
+				width: 450px;
+				/* Full-width */
+				height: 75px;
+				/* Specified height */
+				background: #d3d3d3;
+				/* Grey background */
+				outline: none;
+				/* Remove outline */
+				margin-top: 25px;
+				margin-right: 25px;
+				margin-left: 25px;
+			}
+
+
+			/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+			.slider::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				/* Override default look */
+				appearance: none;
+				width: 75px;
+				/* Set a specific slider handle width */
+				height: 75px;
+				/* Slider handle height */
+				background: #4CAF50;
+				/* Green background */
+				cursor: pointer;
+				/* Cursor on hover */
+				border-radius: 100%;
+			}
+
+			.slider::-moz-range-thumb {
+				width: 75px;
+				/* Set a specific slider handle width */
+				height: 75px;
+				/* Slider handle height */
+				background: #4CAF50;
+				/* Green background */
+				cursor: pointer;
+				/* Cursor on hover */
+				border-radius: 100%;
+			}
+		</style>
+		<script src="joy.js"></script>
+		<meta charset="utf-8" />
+
+		<script type="text/javascript"
+			src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+		<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+
+	</head>
+
+	<body>
+		<div class="row">
+			<div class="columnLateral">
+				<div id="joy1Div" style="width:400px;height: 400px; margin:50px"></div>
+				<div>
+					<div style="text-align: center;padding-bottom: 25px;">
+						<h1>Mode: </h1>
+						<h1 id="mode"></h1>
+					</div>
+
+
+					­<div>
+						­<button id="btnlb"
+							style="width: 200px; height: 100px;font-size: large;margin-right: 25px;margin-left: 25px;">Gauche</button>
+						­<button id="btnrb" style="width: 200px; height: 100px;font-size: large;">Droite</button>
+					</div>
+					<div>
+						<button id="btnStart"
+							style="height: 100px; width: 450px;font-size: large;margin-top: 25px;margin-right: 25px;margin-left: 25px;">start/stop</button>
+					</div>
+					<div>
+						<button id="btnModeAutomatique"
+							style="height: 100px; width: 450px;font-size: large;margin-top: 25px;margin-right: 25px;margin-left: 25px;">
+							Mode automatique</button>
+					</div>
+					<div>
+						<button id="btnProchain"
+							style="height: 100px; width: 450px;font-size: large;margin-top: 25px;margin-right: 25px;margin-left: 25px;">
+							Prochaine Animation</button>
+					</div>
+					<div>
+						<button id="btnModeSingleLeg"
+							style="height: 100px; width: 450px;font-size: large;margin-top: 25px;margin-right: 25px;margin-left: 25px;">
+							Une patte</button>
+					</div>
+					<div>
+						<h2 style="text-align: center;">Hanche</h2>
+						<div class="slidecontainer">
+							<input type="range" min="-100" max="100" value="0" class="slider" id="sliderHanche">
+						</div>
+						<h2 style="text-align: center;">genou</h2>
+						<div class="slidecontainer">
+							<input type="range" min="-100" max="100" value="0" class="slider" id="sliderGenou">
+						</div>
+						<h2 style="text-align: center;">cheville</h2>
+						<div class="slidecontainer">
+							<input type="range" min="-100" max="100" value="0" class="slider" id="sliderCheville">
+						</div>
+					</div>
+
+
+				</div>
+
+			</div>
+			<script type="text/javascript">
+
+
+			</script>
+	</body>
+
+	</html>
+	<script type="text/javascript" type="text/javascript">
+
+		var mode = "marche";
+		//boutons---------------------------------------------
+		var lb = 0;
+		var rb = 0;
+		var start = 0;
+		var axeLt = 0;
+		var axeRt = 0;
+		var valbtnY = 0;
+		var hanche = 0;
+		var genou = 0;
+		var cheville = 0;
+		var back = 0;
+
+
+		btnRotGauche = document.getElementById("btnlb");
+		btnRotGauche.addEventListener("touchstart", function () { lb = 1; });
+		btnRotGauche.addEventListener("touchend", function () { lb = 0; });
+		btnRotGauche.addEventListener("mousedown", function () { lb = 1; });
+		btnRotGauche.addEventListener("mouseup", function () { lb = 0; });
+
+		btnRotDroite = document.getElementById("btnrb");
+		btnRotDroite.addEventListener("touchstart", function () { rb = 1; });
+		btnRotDroite.addEventListener("touchend", function () { rb = 0; });
+		btnRotDroite.addEventListener("mousedown", function () { rb = 1; });
+		btnRotDroite.addEventListener("mouseup", function () { rb = 0; });
+
+		btnAuto = document.getElementById("btnModeAutomatique");
+		btnAuto.addEventListener("touchstart", function () { axeLt = -1; axeRt = -1; mode = "automatique";  btnSelect.textContent = "Prochaine Animation";});
+		btnAuto.addEventListener("touchend", function () { axeLt = 0; axeRt = 0; });
+		btnAuto.addEventListener("mousedown", function () { axeLt = -1; axeRt = -1; mode = "automatique"; btnSelect.textContent = "Prochaine Animation";});
+		btnAuto.addEventListener("mouseup", function () { axeLt = 0; axeRt = 0; });
+
+		btnStart = document.getElementById("btnStart");
+		btnStart.addEventListener("touchstart", function () { start = 1; mode = "marche";});
+		btnStart.addEventListener("touchend", function () { start = 0; });
+		btnStart.addEventListener("mousedown", function () { start = 1; mode = "marche"; });
+		btnStart.addEventListener("mouseup", function () { start = 0; });
+
+		btnSelect = document.getElementById("btnProchain");
+		btnSelect.addEventListener("touchstart", function () { back = 1; });
+		btnSelect.addEventListener("touchend", function () { back = 0; });
+		btnSelect.addEventListener("mousedown", function () { back = 1;});
+		btnSelect.addEventListener("mouseup", function () { back = 0; });
+
+		btnY = document.getElementById("btnModeSingleLeg");
+		btnY.addEventListener("touchstart", function () { btnY = 1; mode = "Single leg"; btnSelect.textContent = "Prochaine Patte";});
+		btnY.addEventListener("touchend", function () { btnY = 0; });
+		btnY.addEventListener("mousedown", function () { btnY = 1; mode = "Single leg"; btnSelect.textContent = "Prochaine Patte"; });
+		btnY.addEventListener("mouseup", function () { btnY = 0; });
+		//slider----------------------------------
+		var sliderHanche = document.getElementById("sliderHanche");
+		// Update the current slider value (each time you drag the slider handle)
+		sliderHanche.oninput = function () { hanche = this.value; }
+
+		var sliderGenou = document.getElementById("sliderGenou");
+		// Update the current slider value (each time you drag the slider handle)
+		sliderGenou.oninput = function () { genou = this.value; }
+
+		var sliderCheville = document.getElementById("sliderCheville");
+		// Update the current slider value (each time you drag the slider handle)
+		sliderCheville.oninput = function () { cheville = this.value; }
+		// Connecting to ROS
+		// -----------------
+		var ros = new ROSLIB.Ros({
+			url: 'ws://192.168.0.112:9090'
+		});
+
+		ros.on('connection', function ()
+		{
+			console.log('Connected to websocket server.');
+		});
+
+		ros.on('error', function (error)
+		{
+			console.log('Error connecting to websocket server: ', error);
+		});
+
+		ros.on('close', function ()
+		{
+			console.log('Connection to websocket server closed.');
+		});
+
+
+		//envoi des données a ros --------------------------------------
+		function Publish_ros()
+		{
+			var x = 0;
+			var y = 0;
+			var z = 0;
+			if (mode == "marche")
+			{
+				x = (Joy1.GetX() / 100) * -1; //on doit inverser car la mannete est dans l'autre sens
+				y = Joy1.GetY() / 100;
+				z = 0;
+			}else if(mode == "Single leg")
+			{
+				x = hanche / 100;
+				y = genou / 100;
+				z = cheville / 100;
+			}
+
+			var cmdJoy = new ROSLIB.Topic({
+				ros: ros,
+				name: 'joy',
+				messageType: 'sensor_msgs/Joy'
+			});
+			var JoystickMsg = new ROSLIB.Message({
+				axes: [x, y, axeLt, 0, z, axeRt],
+				buttons: [0, 0, 0, valbtnY, lb, rb, back, start, 0]
+			});
+			cmdJoy.publish(JoystickMsg);
+			document.getElementById("mode").textContent = mode;
+		}
+		// Create JoyStick object into the DIV 'joy1Div'
+		var Joy1 = new JoyStick('joy1Div');
+		setInterval(Publish_ros, 50);
+	</script>
