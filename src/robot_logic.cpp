@@ -528,6 +528,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     			switch(quelAuto)
     			{
     				case toctoc:
+						servoT = 125;
     					switch(etape)
     					{
     						case 0:	//Permet a l'araignee de prendre sa position de base
@@ -645,6 +646,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
     					break;
 
     				case cancan:
+						servoT = 625;
     					switch(etape)
     					{
     						case 0:	//Position de base de l'araignee
@@ -1239,6 +1241,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 				//Section qui fait tourner l'araignee vers la droite
 				else if(tabBoutons[boutonRB])
 				{
+					servoT = 250;
 					switch(etape)
 					{
 						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
@@ -1316,6 +1319,7 @@ ros::Subscriber subJoy   = n.subscribe("joy", 10, joyCallback);
 				//Section qui fait tourner l'araignee vers la gauche
 				else if(tabBoutons[boutonLB])
 				{
+					servoT = 250;
 					switch(etape)
 					{
 						//Rempli le tableau au complet a la premiere etape pour etre certain d'avoir toutes les valeurs voulues
